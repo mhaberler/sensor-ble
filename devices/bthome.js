@@ -49,8 +49,10 @@ function decodeBTHome(data) {
       const sensorData = {
         label: def.label,
         value: data[1] === 0x01,
-        states: JSON.stringify(def.states), // gross haque
+        // states: JSON.stringify(def.states), // gross haque
+        states: def.states,
       };
+      console.log("binarySensor:", JSON.stringify(sensorData, null, 2));
       binarySensors.push(sensorData);
       data = data.slice(2);
     }
@@ -569,3 +571,50 @@ export const tests = [
     },
   },
 ];
+
+let foo = {
+  "multilevelSensors": [
+    {
+      "label": "temperature",
+      "value": 35,
+      "unit": "°C"
+    },
+    {
+      "label": "humidity",
+      "value": 40,
+      "unit": "%"
+    },
+    {
+      "label": "pressure",
+      "value": 1023.86,
+      "unit": "hPa"
+    },
+    {
+      "label": "illuminance",
+      "value": 50.81,
+      "unit": "lux"
+    },
+    {
+      "label": "co2",
+      "value": 1208,
+      "unit": "ppm"
+    },
+    {
+      "label": "tvoc",
+      "value": 350,
+      "unit": "ug/m3"
+    }
+  ],
+  "binarySensors": [
+    {
+      "label": "power",
+      "value": true,
+      "states": {
+        "false": "Off",
+        "true": "On"
+      }
+    }
+  ],
+  "specialSensors": [],
+  "events": []
+};
