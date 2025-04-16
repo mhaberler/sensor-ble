@@ -49,7 +49,7 @@ function decodeBTHome(data) {
       const sensorData = {
         label: def.label,
         value: data[1] === 0x01,
-        states: def.states,
+        states: JSON.stringify(def.states), // gross haque
       };
       binarySensors.push(sensorData);
       data = data.slice(2);
@@ -114,7 +114,7 @@ function decodeBTHome(data) {
       const value = data.slice(2, 2 + length);
       specialSensors.push({
         type: "raw",
-        value,
+        value: value.toString('hex'),
       });
       data = data.slice(2 + length);
     }
@@ -522,15 +522,13 @@ export const tests = [
       // DIY sensor https://github.com/mhaberler/BTHomeV2-ESP32-example.git#9f34e42b9c3b039718b67da57ea02e7fa0d11417
       serviceData: "403a013c020653034142435403313233",
     },
-    expected:  {
+    expected: {
       multilevelSensors: [],
       binarySensors: [],
-      specialSensors: [
-        { type: 'text', value: 'ABC' },
-      ],
+      specialSensors: [{ type: 'text', value: 'ABC' }, { type: 'raw', value: '313233' }],
       events: [
         { type: 'button', event: 'press' },
-        { type: 'dimmer', event: [Object] }
+        { type: 'dimmer', event: { event: 'rotate right', steps: 6 } }
       ]
     },
   },
@@ -547,7 +545,13 @@ export const tests = [
         { label: 'co2', value: 1208, unit: 'ppm' },
         { label: 'tvoc', value: 350, unit: 'ug/m3' }
       ],
-      binarySensors: [ { label: 'power', value: true, states: [Object] } ],
+      binarySensors: [
+        {
+          label: 'power',
+          value: true,
+          states: '{"false":"Off","true":"On"}'
+        }
+      ],
       specialSensors: [],
       events: []
     },
@@ -558,10 +562,10 @@ export const tests = [
       serviceData: "4400ca01643a00",
     },
     expected: {
-      multilevelSensors: [ { label: 'battery', value: 100, unit: '%' } ],
+      multilevelSensors: [{ label: 'battery', value: 100, unit: '%' }],
       binarySensors: [],
       specialSensors: [],
-      events: [ { type: 'button' } ]
+      events: [{ type: 'button' }]
     },
   },
 ];
