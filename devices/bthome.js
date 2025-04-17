@@ -16,7 +16,7 @@ function decodeBTHome(data) {
     return null;
   }
   const mac_included = ((data[0] & 0x02) != 0);
-  const mac_address = null;
+  let mac_address = null;
   let packetId = null;
   if (mac_included) {
     mac_address = data.slice(1, 7).reverse().toString("hex").match(/.{1,2}/g)?.join(":");
