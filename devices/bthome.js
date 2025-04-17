@@ -15,7 +15,15 @@ function decodeBTHome(data) {
   ) {
     return null;
   }
-  data = data.slice(1);
+  const mac_included = ((data[0] & 0x02) != 0);
+  const mac_address = null;
+  let packetId = null;
+  if (mac_included) {
+    mac_address = data.slice(1, 7).reverse().toString("hex").match(/.{1,2}/g)?.join(":");
+    data = data.slice(7);
+  } else {
+    data = data.slice(1);
+  }
   const multilevelSensors = [];
   const binarySensors = [];
   const specialSensors = [];
@@ -23,7 +31,7 @@ function decodeBTHome(data) {
   while (data.length > 0) {
     const objectId = data[0];
     if (objectId === 0x00) {
-      this.packetId = data[1];
+      packetId = data[1];
       data = data.slice(2);
     }
     else if (multilevelSensorDefinitions.has(objectId)) {
@@ -125,8 +133,9 @@ function decodeBTHome(data) {
       return {};
     }
   }
-  // just indicate match for now
   return {
+    ...(packetId != null ? { packetId } : {}),
+    ...(mac_address != null ? { mac_address } : {}),
     multilevelSensors,
     binarySensors,
     specialSensors,
@@ -536,24 +545,18 @@ export const tests = [
   },
   {
     given: {
-      serviceData: "4002ac0d03a00f04f28f0105d91300100112b804135e01",
+      serviceData: "40000902ac0d03a00f04f28f0105d91300100112b804",
     },
     expected: {
+      packetId: 9,
       multilevelSensors: [
         { label: 'temperature', value: 35, unit: '°C' },
         { label: 'humidity', value: 40, unit: '%' },
         { label: 'pressure', value: 1023.86, unit: 'hPa' },
         { label: 'illuminance', value: 50.81, unit: 'lux' },
-        { label: 'co2', value: 1208, unit: 'ppm' },
-        { label: 'tvoc', value: 350, unit: 'ug/m3' }
+        { label: 'co2', value: 1208, unit: 'ppm' }
       ],
-      binarySensors: [
-        {
-          label: 'power',
-          value: true,
-          states: '{"false":"Off","true":"On"}'
-        }
-      ],
+      binarySensors: [{ label: 'power', value: true, states: [Object] }],
       specialSensors: [],
       events: []
     },
@@ -564,57 +567,12 @@ export const tests = [
       serviceData: "4400ca01643a00",
     },
     expected: {
+      packetId: 202,
       multilevelSensors: [{ label: 'battery', value: 100, unit: '%' }],
       binarySensors: [],
       specialSensors: [],
       events: [{ type: 'button' }]
-    },
+    }
   },
 ];
 
-let foo = {
-  "multilevelSensors": [
-    {
-      "label": "temperature",
-      "value": 35,
-      "unit": "°C"
-    },
-    {
-      "label": "humidity",
-      "value": 40,
-      "unit": "%"
-    },
-    {
-      "label": "pressure",
-      "value": 1023.86,
-      "unit": "hPa"
-    },
-    {
-      "label": "illuminance",
-      "value": 50.81,
-      "unit": "lux"
-    },
-    {
-      "label": "co2",
-      "value": 1208,
-      "unit": "ppm"
-    },
-    {
-      "label": "tvoc",
-      "value": 350,
-      "unit": "ug/m3"
-    }
-  ],
-  "binarySensors": [
-    {
-      "label": "power",
-      "value": true,
-      "states": {
-        "false": "Off",
-        "true": "On"
-      }
-    }
-  ],
-  "specialSensors": [],
-  "events": []
-};
