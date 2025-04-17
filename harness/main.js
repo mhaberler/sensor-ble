@@ -52,7 +52,7 @@ async function main() {
       } else {
         console.log("Scanning all devices");
       }
-      await noble.startScanningAsync([], false);
+      await noble.startScanningAsync([], true);
     } else {
       await noble.stopScanningAsync();
       console.log("Scanning stopped");
@@ -62,9 +62,12 @@ async function main() {
   noble.on("discover", async (peripheral) => {
     try {
       const { advertisement } = peripheral;
+      // console.log('---got: ', advertisement)
+
       if (decoder == null) {
         logFoundDevice(peripheral.id, advertisement);
       } else if (isDecoderValid(decoder, advertisement)) {
+        console.log('try: ', advertisement)
         if (decoder.advertisementDecode) {
           const decoded = decoder.advertisementDecode(
             advertisement.manufacturerData

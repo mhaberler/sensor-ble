@@ -15,6 +15,7 @@ function decodeBTHome(data) {
   ) {
     return null;
   }
+  // console.log("BTHome v2 datalength:", data.length);
   const mac_included = ((data[0] & 0x02) != 0);
   let mac_address = null;
   let packetId = null;
@@ -574,5 +575,72 @@ export const tests = [
       events: [{ type: 'button' }]
     }
   },
+  {
+    given: {
+      //  DIY sensor extended advertising with pid
+      serviceData: "40004a03a00f04f28f015312424c41424c4164646164617364617358595a5403313233",
+    },
+    expected: {
+      packetId: 74,
+      multilevelSensors: [
+        { label: 'humidity', value: 40, unit: '%' },
+        { label: 'pressure', value: 1023.86, unit: 'hPa' }
+      ],
+      binarySensors: [],
+      specialSensors: [
+        { type: 'text', value: 'BLABLAddadasdasXYZ' },
+        { type: 'raw', value: '313233' }
+      ],
+      events: []
+    }
+  },
+  {
+    given: {
+      //  DIY sensor extended advertising with pid and mac
+      serviceData: "4248ca433932a5002f03a00f04f28f015312424c41424c4164646164617364617358595a5403313233",
+    },
+    expected: {
+      packetId: 47,
+      mac_address: 'a5:32:39:43:ca:48',
+      multilevelSensors: [
+        { label: 'humidity', value: 40, unit: '%' },
+        { label: 'pressure', value: 1023.86, unit: 'hPa' }
+      ],
+      binarySensors: [],
+      specialSensors: [
+        { type: 'text', value: 'BLABLAddadasdasXYZ' },
+        { type: 'raw', value: '313233' }
+      ],
+      events: []
+    },
+  },
+  {
+    given: {
+      //  DIY sensor extended advertising with pid and mac, lots of fields
+      serviceData: "4248ca433932a5002c02ac0d03a00f04f28f0105d91300100112b804135e013a013c02065312424c41424c4164646164617364617358595a5403313233",
+    },
+    expected: {
+      packetId: 44,
+      mac_address: 'a5:32:39:43:ca:48',
+      multilevelSensors: [
+        { label: 'temperature', value: 35, unit: '°C' },
+        { label: 'humidity', value: 40, unit: '%' },
+        { label: 'pressure', value: 1023.86, unit: 'hPa' },
+        { label: 'illuminance', value: 50.81, unit: 'lux' },
+        { label: 'co2', value: 1208, unit: 'ppm' },
+        { label: 'tvoc', value: 350, unit: 'ug/m3' }
+      ],
+      binarySensors: [ { label: 'power', value: true, states: [Object] } ],
+      specialSensors: [
+        { type: 'text', value: 'BLABLAddadasdasXYZ' },
+        { type: 'raw', value: '313233' }
+      ],
+      events: [
+        { type: 'button', event: 'press' },
+        { type: 'dimmer', event: [Object] }
+      ]
+    },
+  },
+
 ];
 
