@@ -44,7 +44,7 @@ function decodeBTHome(_manufacturerData, serviceData) {
       }
       let key = def.label;
       if (def.unit) {
-        key += `_${def.unit}`;
+        key += `_${def.unit.toLowerCase()}`;
       }
       result[key] = value;
       data = data.slice(1 + def.size);
