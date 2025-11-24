@@ -129,6 +129,14 @@ const multilevelSensorsArray = [
     unit: "m/s²",
   },
   {
+    id: 0x63,
+    label: "acceleration",
+    signed: true,
+    size: 4,
+    factor: 0.000001,
+    unit: "m/s²",
+  },
+  {
     id: 0x01,
     label: "battery",
     signed: false,
@@ -322,6 +330,14 @@ const multilevelSensorsArray = [
     signed: false,
     size: 2,
     factor: 0.01,
+    unit: "m/s",
+  },
+  {
+    id: 0x62,
+    label: "speed",
+    signed: true,
+    size: 4,
+    factor: 0.000001,
     unit: "m/s",
   },
   {
@@ -601,6 +617,16 @@ export const tests = [
     expected: {
       devicetype: 1, fwversion4: '4.2.1.0', fwversion3: '6.1.0'
     },
-  }
+  },
+  { // test signed speed and acceleration
+    given: {
+      serviceData: { fcd2: "40624099dfff630057d0ff" },
+    },
+    expected: {
+      'speed_m/s': -2.123456, 'acceleration_m/s²': -3.123456
+    }
+  },
+
+
 ];
 
