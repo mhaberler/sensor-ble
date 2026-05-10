@@ -6,8 +6,8 @@
 | **Session ID** | `d23acc51-ad18-49ac-b576-358ca4c3a788` |
 | **Working Dir** | `/Users/mah/Ballon/src/BalloonWare/sensor-ble` |
 | **Started** | 10/05/2026, 16:04:19 |
-| **Last Updated** | 10/05/2026, 17:04:43 |
-| **Messages** | 226 |
+| **Last Updated** | 10/05/2026, 17:06:07 |
+| **Messages** | 236 |
 
 ---
 
@@ -4299,6 +4299,152 @@ Three new gotchas added to [BLEPARSER.md](BLEPARSER.md):
 - **bleparser coverage gaps** — when bleparser lacks a device variant, consult `decoder/src/devices/` (Theengs) + `decoder/tests/BLE/test_ble.cpp`
 - **TLV ID overloading** — same ID (`0x0F`, `0x04`) means different things on different device types; guard with `deviceId` check
 - **Multi-format dispatch** — use post-loop fallback on `buf.length` rather than length-conditional logic inside the TLV loop
+
+
+---
+
+## User <sup>10/05/2026, 17:05:38</sup>
+
+<ide_opened_file>The user opened the file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/qingping.js in the IDE. This may or may not be related to the current task.</ide_opened_file>
+
+note bleparser cross-checking opportunity and relevant learnings in theengs_decoder skill
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:05:43</sup>
+
+Reading the theengs_decoder skill to understand its current state before adding.
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:05:43</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/theengs_decoder/SKILL.md",
+  "offset": 200,
+  "limit": 85
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:05:43</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+200	
+201	Theengs test data lives in `decoder/tests/BLE/test_ble.cpp` (C++ array, not JSON files). Search for the device name with `grep -i <name> decoder/tests/BLE/test_ble.cpp`. Entries look like:
+202	
+203	```cpp
+204	{"Mikrotik", "TG-BT5-IN/-OUT", "4f090100..."},   // raw hex payload
+205	"{\"tempc\":28.625,...}",                           // expected JSON (preceding line)
+206	```
+207	
+208	The expected JSON line immediately precedes the raw hex line for each test case.
+209	
+210	If no test data exists: construct a synthetic hex payload consistent with the condition prefix and realistic sensor values, decode manually, and use as test case.
+211	
+212	### Sensorlog scan
+213	
+214	After deriving tests from `test_ble.cpp`, scan `sensorlogs/*.json` for real captured advertisements matching this decoder's manufacturer prefix. For each match found, decode the `manufacturerData` field manually and add as an additional test case. This catches real-world payloads that differ from synthetic test data
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:05:46</sup>
+
+Now I have the full picture. Adding two things: (1) bleparser cross-check opportunity in the Workflow section, and (2) the Qingping/CGH1 TLV learnings in Gotchas.
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:05:50</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/theengs_decoder/SKILL.md",
+  "old_string": "### Workflow\n\n- After adding a new decoder: run `npm run decode:update` **before** `npm run test:regression` -- no snapshot yet means regression will fail.\n- Verify hex encodings: `value * scale_factor = raw_int16`, convert to LE hex bytes, check byte count matches condition length.",
+  "new_string": "### Workflow\n\n- After adding a new decoder: run `npm run decode:update` **before** `npm run test:regression` -- no snapshot yet means regression will fail.\n- Verify hex encodings: `value * scale_factor = raw_int16`, convert to LE hex bytes, check byte count matches condition length.\n- Cross-check with bleparser: `bleparser/package/bleparser/<device>.py` often implements the same device with a different codebase. Use it to verify field semantics, sentinel handling, and expected numeric values independently. Run `bleparser/package/tests/test_<device>.py` payloads through your JS decoder as an additional validation source. If the two implementations agree on a value, it's almost certainly correct."
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:05:51</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/theengs_decoder/SKILL.md has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:06:01</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/theengs_decoder/SKILL.md",
+  "old_string": "- Multi-format OR conditions: dispatch on payload length, separate decode paths per variant.",
+  "new_string": "- Multi-format OR conditions: dispatch on payload length, separate decode paths per variant.\n- Theengs covers device variants that bleparser misses (e.g. CGH1 contact sensor is absent from bleparser's qingping.py but present in `decoder/src/devices/CGH1_json.h`). When adding support for a Qingping (or other multi-model) device, always check `decoder/src/devices/` for sibling `.h` files covering additional model IDs.\n- TLV ID semantics are device-type-specific within a shared service UUID. The same TLV ID (e.g. `0x0F`) can mean packet sequence on one device model and contact state on another. Guard device-specific TLV handling with a `deviceId` check; do not add global handlers for overloaded IDs.\n- Post-loop fallback for multi-length formats: when a device emits payloads of different lengths with the same field at different positions (e.g. CGH1: contact state in `0x04` TLV at 14 bytes, or last byte at 17 bytes), use a post-loop `if (buf.length === N)` fallback rather than injecting length conditionals into the TLV loop itself."
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:06:02</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/theengs_decoder/SKILL.md has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:06:07</sup>
+
+Done. Added to [theengs_decoder/SKILL.md](theengs_decoder/SKILL.md):
+
+- **Workflow**: bleparser cross-check — run bleparser test payloads through the JS decoder; agreement between two independent implementations is strong correctness signal.
+- **Gotchas**: Theengs covers variants bleparser misses (CGH1 example); TLV ID overloading is device-type-specific; post-loop fallback pattern for multi-length formats.
 
 
 ---

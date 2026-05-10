@@ -269,6 +269,7 @@ Key facts:
 
 - After adding a new decoder: run `npm run decode:update` **before** `npm run test:regression` -- no snapshot yet means regression will fail.
 - Verify hex encodings: `value * scale_factor = raw_int16`, convert to LE hex bytes, check byte count matches condition length.
+- Cross-check with bleparser: `bleparser/package/bleparser/<device>.py` often implements the same device with a different codebase. Use it to verify field semantics, sentinel handling, and expected numeric values independently. Run `bleparser/package/tests/test_<device>.py` payloads through your JS decoder as an additional validation source. If the two implementations agree on a value, it's almost certainly correct.
 
 ### Offset gotchas
 
@@ -278,3 +279,6 @@ Key facts:
 - Inverted bits: check Theengs invert flag (5th param) against expected test values; apply `1 - raw_bit` when needed.
 - `static_value` maps to bare-name string fields in SensorValues (no unit suffix).
 - Multi-format OR conditions: dispatch on payload length, separate decode paths per variant.
+- Theengs covers device variants that bleparser misses (e.g. CGH1 contact sensor is absent from bleparser's qingping.py but present in `decoder/src/devices/CGH1_json.h`). When adding support for a Qingping (or other multi-model) device, always check `decoder/src/devices/` for sibling `.h` files covering additional model IDs.
+- TLV ID semantics are device-type-specific within a shared service UUID. The same TLV ID (e.g. `0x0F`) can mean packet sequence on one device model and contact state on another. Guard device-specific TLV handling with a `deviceId` check; do not add global handlers for overloaded IDs.
+- Post-loop fallback for multi-length formats: when a device emits payloads of different lengths with the same field at different positions (e.g. CGH1: contact state in `0x04` TLV at 14 bytes, or last byte at 17 bytes), use a post-loop `if (buf.length === N)` fallback rather than injecting length conditionals into the TLV loop itself.
