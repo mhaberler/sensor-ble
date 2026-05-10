@@ -6,8 +6,8 @@
 | **Session ID** | `d23acc51-ad18-49ac-b576-358ca4c3a788` |
 | **Working Dir** | `/Users/mah/Ballon/src/BalloonWare/sensor-ble` |
 | **Started** | 10/05/2026, 16:04:19 |
-| **Last Updated** | 10/05/2026, 16:19:24 |
-| **Messages** | 78 |
+| **Last Updated** | 10/05/2026, 16:22:20 |
+| **Messages** | 118 |
 
 ---
 
@@ -1596,6 +1596,744 @@ The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/BLEPARSER.md has been upda
 ## Assistant <sup>10/05/2026, 16:19:24</sup>
 
 Fixed.
+
+
+---
+
+## User <sup>10/05/2026, 16:20:16</sup>
+
+add a mikrotik decoder
+
+
+---
+
+## User <sup>10/05/2026, 16:20:25</sup>
+
+[Request interrupted by user]
+
+
+---
+
+## User <sup>10/05/2026, 16:20:40</sup>
+
+add a mikrotik decoder from bleparser
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:20:43</sup>
+
+Reading the source files to derive the decoder.
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:20:44</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/bleparser/package/bleparser/mikrotik.py"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:20:44</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	"""Parser for Mikrotik BLE advertisements"""
+2	import logging
+3	import math
+4	from struct import unpack
+5	
+6	from .helpers import to_mac, to_unformatted_mac
+7	
+8	_LOGGER = logging.getLogger(__name__)
+9	
+10	
+11	def convert_8_8_to_float(val_1, val_2):
+12	    """8.8 to float converter"""
+13	    return val_1 + (val_2 / 256)
+14	
+15	
+16	def parse_mikrotik(self, data, source_mac, rssi):
+17	    """Inkbird parser"""
+18	    msg_length = len(data)
+19	    firmware = "Mikrotik"
+20	    result = {"firmware": firmware}
+21	    if msg_length == 22:
+22	        xvalue = data[4:]
+23	        (
+24	            version,
+25	            user_data,
+26	            salt,
+27	            acc_x_frac, acc_x,
+28	            acc_y_frac, acc_y,
+29	            acc_z_frac, acc_z,
+30	            temp_frac, temp,
+31	            uptime,
+32	            flags,
+33	            batt
+34	        ) = unpack("<BBHBBBBBBBbIBB", xvalue)
+35	
+36	        # Check if the device uses encryption
+37	        is_encrypted = user_data & 1
+38	    
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:20:44</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/bleparser/package/tests/test_mikrotik.py"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:20:44</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	"""The tests for the Laica Smart Scale ble_parser."""
+2	from bleparser import BleParser
+3	
+4	
+5	class TestLaica:
+6	    """Tests for the Mikrotik parser"""
+7	    def test_mikrotik_tg_bt5_in(self):
+8	        """Test Mikrotik TG-BT5-IN parser."""
+9	        data_string = "043E2202010300DD7B146E2CDC1615FF4F09010010A90000FDFF010000806BE866000062D5"
+10	        data = bytes(bytearray.fromhex(data_string))
+11	
+12	        # pylint: disable=unused-variable
+13	        ble_parser = BleParser()
+14	        sensor_msg, tracker_msg = ble_parser.parse_raw_data(data)
+15	
+16	        assert sensor_msg["firmware"] == "Mikrotik"
+17	        assert sensor_msg["type"] == "TG-BT5-IN"
+18	        assert sensor_msg["mac"] == "DC2C6E147BDD"
+19	        assert sensor_msg["packet"] == "no packet id"
+20	        assert sensor_msg["data"]
+21	        assert sensor_msg["version"] == 1
+22	        assert sensor_msg["acceleration x"] == 0.0
+23	        assert sensor_msg["acceleration y"] == 255.98828125
+24	        assert sens
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:20:47</sup>
+
+Now I'll manually trace the payload to derive exact test values before writing code.
+
+**TG-BT5-IN raw:** `043E2202010300DD7B146E2CDC1615FF4F09010010A90000FDFF010000806BE866000062D5`
+
+Ad payload starts at byte 14 (0-indexed). Let me extract:
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:21:00</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\n// TG-BT5-IN\nconst raw_in = '043E2202010300DD7B146E2CDC1615FF4F09010010A90000FDFF010000806BE866000062D5';\nconst b_in = Buffer.from(raw_in, 'hex');\n// adpayload starts at byte 14, adstruct: len=b[14], type=b[15], then mfr data\n// adstruct: 16 15 FF 4F 09 ...\nconsole.log('adstruct start byte 14:', b_in.slice(14).toString('hex'));\n// manufacturerData = adstruct[2:] = b[16:]... but adstruct is b[14], so:\n// adstruct bytes: b[14]=len=0x16=22, b[15]=type=0xFF, b[16..]=mfrData\nconst mfr_in = b_in.slice(16, 16 + (b_in[14] - 1));\nconsole.log('mfrData IN len:', mfr_in.length, 'hex:', mfr_in.toString('hex'));\n\n// TG-BT5-OUT\nconst raw_out = '043E2202010300DD7B146E2CDC1615FF4F09010010A90000FDFF0100A1196BE866000062D5';\nconst b_out = Buffer.from(raw_out, 'hex');\nconst mfr_out = b_out.slice(16, 16 + (b_out[14] - 1));\nconsole.log('mfrData OUT len:', mfr_out.length, 'hex:', mfr_out.toString('hex'));\n\n// Now decode: bleparser data[4:] = mfr[2:] (mfr[0..1] = company ID)\n// struct '<BBHBBBBBBBbIBB' from mfr[2:]\n// B version, B user_data, H salt, B acc_x_frac, B acc_x, B acc_y_frac, B acc_y, B acc_z_frac, B acc_z, B temp_frac, b temp, I uptime, B flags, B batt\nfunction decode(mfr) {\n  const p = mfr.slice(2); // payload past company ID\n  let off = 0;\n  const version   = p.readUInt8(off++);\n  const user_data = p.readUInt8(off++);\n  const salt      = p.readUInt16LE(off); off+=2;\n  const acc_x_frac= p.readUInt8(off++);\n  const acc_x     = p.readUInt8(off++);\n  const acc_y_frac= p.readUInt8(off++);\n  const acc_y     = p.readUInt8(off++);\n  const acc_z_frac= p.readUInt8(off++);\n  const acc_z     = p.readUInt8(off++);\n  const temp_frac = p.readUInt8(off++);\n  const temp      = p.readInt8(off++);\n  const uptime    = p.readUInt32LE(off); off+=4;\n  const flags     = p.readUInt8(off++);\n  const batt      = p.readUInt8(off++);\n  console.log({version, user_data, salt, acc_x_frac, acc_x, acc_y_frac, acc_y, acc_z_frac, acc_z, temp_frac, t
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:21:04</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+adstruct start byte 14: 15ff4f09010010a90000fdff010000806be866000062d5
+mfrData IN len: 20 hex: 4f09010010a90000fdff010000806be866000062
+mfrData OUT len: 20 hex: 4f09010010a90000fdff0100a1196be866000062
+--- IN ---
+{
+  version: 1,
+  user_data: 0,
+  salt: 43280,
+  acc_x_frac: 0,
+  acc_x: 0,
+  acc_y_frac: 253,
+  acc_y: 255,
+  acc_z_frac: 1,
+  acc_z: 0,
+  temp_frac: 0,
+  temp: -128,
+  uptime: 6744171,
+  flags: 0,
+  batt: 98
+}
+{
+  ax: 0,
+  ay: 255.98828125,
+  az: 0.00390625,
+  temperature: -128,
+  accel: 255.9882812798037
+}
+flags: 0 switch: 0 tilt: 0 drop: 0 impx: 0 impy: 0 impz: 0
+--- OUT ---
+{
+  version: 1,
+  user_data: 0,
+  salt: 43280,
+  acc_x_frac: 0,
+  acc_x: 0,
+  acc_y_frac: 253,
+  acc_y: 255,
+  acc_z_frac: 1,
+  acc_z: 0,
+  temp_frac: 161,
+  temp: 25,
+  uptime: 6744171,
+  flags: 0,
+  batt: 98
+}
+{
+  ax: 0,
+  ay: 255.98828125,
+  az: 0.00390625,
+  temperature: 25.62890625,
+  accel: 255.9882812798037
+}
+flags: 0 switch: 0 tilt: 0 drop: 0 impx: 0 impy: 0 impz: 0
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:21:06</sup>
+
+Values match bleparser tests exactly. Now check existing devices and main.js, then write the decoder.
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:21:07</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/main.js"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:21:07</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	import { decoder as airpods } from "./devices/airpods.js";
+2	import { decoder as ruuvi } from "./devices/ruuvi.js";
+3	import { decoder as muse_v3 } from "./devices/muse_v3.js";
+4	import { decoder as bthome } from "./devices/bthome.js";
+5	import { decoder as mopeka } from "./devices/mopeka.js";
+6	import { decoder as rc1010 } from "./devices/rc1010.js";
+7	
+8	export const decoders = [ruuvi, muse_v3, airpods, bthome, mopeka, rc1010];
+9
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:21:07</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "ls /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/",
+  "description": "List existing device decoders"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:21:07</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+airpods.js
+bthome.js
+mopeka.js
+muse_v3.js
+rc1010.js
+ruuvi.js
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:21:14</sup>
+
+Now check sensorlogs for any Mikrotik packets (prefix `4f09`):
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:21:15</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -rl '\"4f09\\|\"4F09' /Users/mah/Ballon/src/BalloonWare/sensor-ble/sensorlogs/ 2>/dev/null | head -5",
+  "description": "Search sensorlogs for Mikrotik manufacturer prefix"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:21:15</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+/Users/mah/Ballon/src/BalloonWare/sensor-ble/sensorlogs/2026-05-08_20-21-43.json
+/Users/mah/Ballon/src/BalloonWare/sensor-ble/sensorlogs/2026-03-28_17-22-29.json
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:21:19</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\nconst fs = require('fs');\nfor (const f of ['sensorlogs/2026-05-08_20-21-43.json','sensorlogs/2026-03-28_17-22-29.json']) {\n  const lines = fs.readFileSync('/Users/mah/Ballon/src/BalloonWare/sensor-ble/' + f, 'utf8').split('\\n');\n  for (const line of lines) {\n    try {\n      const obj = JSON.parse(line);\n      const md = obj.manufacturerData || '';\n      if (md.toLowerCase().startsWith('4f09')) {\n        console.log(f, JSON.stringify(obj));\n      }\n    } catch {}\n  }\n}\n\"\n",
+  "description": "Extract Mikrotik entries from sensorlogs"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:21:21</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+(Bash completed with no output)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:21:24</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -i '4f09' /Users/mah/Ballon/src/BalloonWare/sensor-ble/sensorlogs/2026-05-08_20-21-43.json | head -3",
+  "description": "Show raw Mikrotik lines in sensorlog"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:21:24</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+"manufacturerData": "4f090100c517040001000200b017996f75000064",
+        "advertisement": "02010615ff4f090100c517040001000200b017996f75000064"
+        "manufacturerData": "4f090100c10affff0100f6ff0080636e75000050",
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:21:26</sup>
+
+Two real payloads found. Let me decode them:
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:21:33</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\nfunction decode(hex) {\n  const mfr = Buffer.from(hex, 'hex');\n  if (mfr.length !== 20) { console.log('unexpected length', mfr.length); return; }\n  const p = mfr.slice(2);\n  let off = 0;\n  const version   = p.readUInt8(off++);\n  const user_data = p.readUInt8(off++);\n  const salt      = p.readUInt16LE(off); off+=2;\n  const acc_x_frac= p.readUInt8(off++);\n  const acc_x     = p.readUInt8(off++);\n  const acc_y_frac= p.readUInt8(off++);\n  const acc_y     = p.readUInt8(off++);\n  const acc_z_frac= p.readUInt8(off++);\n  const acc_z     = p.readUInt8(off++);\n  const temp_frac = p.readUInt8(off++);\n  const temp      = p.readInt8(off++);\n  const uptime    = p.readUInt32LE(off); off+=4;\n  const flags     = p.readUInt8(off++);\n  const batt      = p.readUInt8(off++);\n  const ax = acc_x + acc_x_frac/256;\n  const ay = acc_y + acc_y_frac/256;\n  const az = acc_z + acc_z_frac/256;\n  const temperature = temp === -128 ? null : temp + temp_frac/256;\n  const accel = Math.sqrt(ax**2 + ay**2 + az**2);\n  console.log(JSON.stringify({\n    temperature_C: temperature, acceleration_x_g: ax, acceleration_y_g: ay, acceleration_z_g: az,\n    acceleration_g: accel, uptime_s: uptime, battery_percent: batt,\n    switch_dimensionless: flags&1, tilt_dimensionless: flags&2,\n    dropping_dimensionless: flags&4, impact_dimensionless: (flags&8||flags&16||flags&32)?1:0,\n    impactX_dimensionless: flags&8, impactY_dimensionless: flags&16, impactZ_dimensionless: flags&32,\n    version_dimensionless: version\n  }, null, 2));\n}\ndecode('4f090100c517040001000200b017996f75000064');\ndecode('4f090100c10affff0100f6ff0080636e75000050');\n\"\n",
+  "description": "Decode both sensorlog Mikrotik payloads"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:21:35</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+{
+  "temperature_C": 23.6875,
+  "acceleration_x_g": 0.015625,
+  "acceleration_y_g": 0.00390625,
+  "acceleration_z_g": 0.0078125,
+  "acceleration_g": 0.01790068630842125,
+  "uptime_s": 7696281,
+  "battery_percent": 100,
+  "switch_dimensionless": 0,
+  "tilt_dimensionless": 0,
+  "dropping_dimensionless": 0,
+  "impact_dimensionless": 0,
+  "impactX_dimensionless": 0,
+  "impactY_dimensionless": 0,
+  "impactZ_dimensionless": 0,
+  "version_dimensionless": 1
+}
+{
+  "temperature_C": null,
+  "acceleration_x_g": 255.99609375,
+  "acceleration_y_g": 0.00390625,
+  "acceleration_z_g": 255.9609375,
+  "acceleration_g": 362.0082893476287,
+  "uptime_s": 7695971,
+  "battery_percent": 80,
+  "switch_dimensionless": 0,
+  "tilt_dimensionless": 0,
+  "dropping_dimensionless": 0,
+  "impact_dimensionless": 0,
+  "impactX_dimensionless": 0,
+  "impactY_dimensionless": 0,
+  "impactZ_dimensionless": 0,
+  "version_dimensionless": 1
+}
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:21:38</sup>
+
+Second sensorlog payload: `user_data` needs checking — `acc_x=255,acc_y=1,acc_z=255` with fracs `c1,0a,ff,01,00,80`. Let me re-examine carefully:
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:21:42</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\nconst mfr = Buffer.from('4f090100c10affff0100f6ff0080636e75000050', 'hex');\nconst p = mfr.slice(2);\nconsole.log('payload bytes:', [...p].map(b=>b.toString(16).padStart(2,'0')).join(' '));\n// B version, B user_data, H salt, B acc_x_frac, B acc_x, B acc_y_frac, B acc_y, B acc_z_frac, B acc_z, B temp_frac, b temp, I uptime, B flags, B batt\nlet off=0;\nconsole.log('version',p[off++]);\nconsole.log('user_data',p[off++]);\nconsole.log('salt LE',p.readUInt16LE(off)); off+=2;\nconst axf=p[off++], ax=p[off++];\nconst ayf=p[off++], ay=p[off++];\nconst azf=p[off++], az=p[off++];\nconst tf=p[off++], t=p.readInt8(off++);\nconst up=p.readUInt32LE(off); off+=4;\nconst fl=p[off++], bt=p[off++];\nconsole.log({axf,ax,ayf,ay,azf,az,tf,t,up,fl,bt});\nconsole.log('encrypted?', p[1] & 1);\n\"\n",
+  "description": "Detailed byte trace of second sensorlog payload"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:21:45</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+payload bytes: 01 00 c1 0a ff ff 01 00 f6 ff 00 80 63 6e 75 00 00 50
+version 1
+user_data 0
+salt LE 2753
+{
+  axf: 255,
+  ax: 255,
+  ayf: 1,
+  ay: 0,
+  azf: 246,
+  az: 255,
+  tf: 0,
+  t: -128,
+  up: 7695971,
+  fl: 0,
+  bt: 80
+}
+encrypted? 0
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:21:49</sup>
+
+`temp=-128` → null (TG-BT5-IN). `acc_x = 255 + 255/256`, `acc_y = 0 + 1/256`, `acc_z = 255 + 246/256`. Now I have everything. Writing the decoder:
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:22:03</sup>
+
+<details>
+<summary>Tool: <code>Write</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/mikrotik.js",
+  "content": "function decodeMikrotik(manufacturerData) {\n  if (manufacturerData.length !== 20) return null;\n  if (manufacturerData[0] !== 0x4f || manufacturerData[1] !== 0x09) return null;\n\n  const p = manufacturerData.slice(2);\n  let off = 0;\n  const version   = p.readUInt8(off++);\n  const user_data = p.readUInt8(off++);\n  off += 2; // salt\n  const acc_x_frac = p.readUInt8(off++);\n  const acc_x      = p.readUInt8(off++);\n  const acc_y_frac = p.readUInt8(off++);\n  const acc_y      = p.readUInt8(off++);\n  const acc_z_frac = p.readUInt8(off++);\n  const acc_z      = p.readUInt8(off++);\n  const temp_frac  = p.readUInt8(off++);\n  const temp       = p.readInt8(off++);\n  const uptime     = p.readUInt32LE(off); off += 4;\n  const flags      = p.readUInt8(off++);\n  const batt       = p.readUInt8(off++);\n\n  if (user_data & 1) return null; // encrypted\n\n  const ax = acc_x + acc_x_frac / 256;\n  const ay = acc_y + acc_y_frac / 256;\n  const az = acc_z + acc_z_frac / 256;\n  const temperature = temp === -128 ? null : temp + temp_frac / 256;\n\n  return {\n    temperature_C:          temperature,\n    acceleration_x_g:       ax,\n    acceleration_y_g:       ay,\n    acceleration_z_g:       az,\n    acceleration_g:         Math.sqrt(ax ** 2 + ay ** 2 + az ** 2),\n    uptime_s:               uptime,\n    battery_percent:        batt,\n    version_dimensionless:  version,\n    switch_dimensionless:   flags & 1,\n    tilt_dimensionless:     flags & 2,\n    dropping_dimensionless: flags & 4,\n    impactX_dimensionless:  flags & 8,\n    impactY_dimensionless:  flags & 16,\n    impactZ_dimensionless:  flags & 32,\n    impact_dimensionless:   (flags & 56) ? 1 : 0,\n  };\n}\n\n/** @type {import('../types.js').Decoder} */\nexport const decoder = {\n  decoderName: \"mikrotik\",\n  manufacturer: \"4f09\",\n  advertisementDecode: decodeMikrotik,\n};\n\n/** @type {import('../types.js').T
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:22:04</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+File created successfully at: /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/mikrotik.js (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:22:09</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/main.js",
+  "old_string": "import { decoder as airpods } from \"./devices/airpods.js\";\nimport { decoder as ruuvi } from \"./devices/ruuvi.js\";\nimport { decoder as muse_v3 } from \"./devices/muse_v3.js\";\nimport { decoder as bthome } from \"./devices/bthome.js\";\nimport { decoder as mopeka } from \"./devices/mopeka.js\";\nimport { decoder as rc1010 } from \"./devices/rc1010.js\";\n\nexport const decoders = [ruuvi, muse_v3, airpods, bthome, mopeka, rc1010];",
+  "new_string": "import { decoder as airpods } from \"./devices/airpods.js\";\nimport { decoder as ruuvi } from \"./devices/ruuvi.js\";\nimport { decoder as muse_v3 } from \"./devices/muse_v3.js\";\nimport { decoder as bthome } from \"./devices/bthome.js\";\nimport { decoder as mopeka } from \"./devices/mopeka.js\";\nimport { decoder as rc1010 } from \"./devices/rc1010.js\";\nimport { decoder as mikrotik } from \"./devices/mikrotik.js\";\n\nexport const decoders = [ruuvi, muse_v3, airpods, bthome, mopeka, rc1010, mikrotik];"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:22:10</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/main.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:22:13</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "npm test 2>&1",
+  "description": "Run unit tests"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:22:13</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+> sensor-ble@0.0.1 test
+> node harness/test.js
+
+Test passed airpods
+Test passed airpods
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mopeka
+Test passed mopeka
+Test passed musev3
+Test passed musev3
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed ruuvi
+Test passed ruuvi
+All tests completed.
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:22:16</sup>
+
+All 4 mikrotik tests pass. Now update regression snapshots:
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:22:17</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "npm run decode:update 2>&1",
+  "description": "Regenerate regression snapshots"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:22:17</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+> sensor-ble@0.0.1 decode:update
+> node harness/regression.js --update
+
+Updated snapshot: 2026-03-28_17-22-29.json (349 results)
+Updated snapshot: 2026-05-08_20-21-43.json (32 results)
+Updated snapshot: 2026-05-08_20-36-52.json (22 results)
+Updated snapshot: otodata.json (4 results)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:22:20</sup>
+
+Done. [devices/mikrotik.js](devices/mikrotik.js) created with 4 tests (2 from bleparser test file, 2 from sensorlogs). All tests pass, snapshots updated.
 
 
 ---
