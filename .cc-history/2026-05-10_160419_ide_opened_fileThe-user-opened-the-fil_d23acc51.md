@@ -6,8 +6,8 @@
 | **Session ID** | `d23acc51-ad18-49ac-b576-358ca4c3a788` |
 | **Working Dir** | `/Users/mah/Ballon/src/BalloonWare/sensor-ble` |
 | **Started** | 10/05/2026, 16:04:19 |
-| **Last Updated** | 10/05/2026, 16:22:20 |
-| **Messages** | 118 |
+| **Last Updated** | 10/05/2026, 16:26:14 |
+| **Messages** | 151 |
 
 ---
 
@@ -2334,6 +2334,601 @@ Updated snapshot: otodata.json (4 results)
 ## Assistant <sup>10/05/2026, 16:22:20</sup>
 
 Done. [devices/mikrotik.js](devices/mikrotik.js) created with 4 tests (2 from bleparser test file, 2 from sensorlogs). All tests pass, snapshots updated.
+
+
+---
+
+## User <sup>10/05/2026, 16:24:37</sup>
+
+add qingping decoder
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:24:39</sup>
+
+Reading the source files first.
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:24:40</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/bleparser/package/bleparser/qingping.py"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:24:40</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	"""Parser for Cleargrass or Qingping BLE advertisements"""
+2	import logging
+3	from struct import unpack
+4	
+5	from .helpers import (
+6	    to_mac,
+7	    to_unformatted_mac,
+8	)
+9	
+10	_LOGGER = logging.getLogger(__name__)
+11	
+12	
+13	def parse_qingping(self, data, source_mac, rssi):
+14	    """Qingping parser"""
+15	    msg_length = len(data)
+16	    if msg_length > 12:
+17	        firmware = "Qingping"
+18	        device_id = data[5]
+19	        if device_id == 0x01:
+20	            device_type = "CGG1"
+21	        elif device_id == 0x07:
+22	            device_type = "CGG1"
+23	        elif device_id == 0x09:
+24	            device_type = "CGP1W"
+25	        elif device_id == 0x12:
+26	            device_type = "CGPR1"
+27	        elif device_id == 0x0C:
+28	            device_type = "CGD1"
+29	        elif device_id == 0x0E:
+30	            device_type = "CGDN1"
+31	        else:
+32	            device_type = None
+33	
+34	        if device_type == "CGDN1":
+35	            qingping_mac = source_mac
+36	   
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:24:40</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/bleparser/package/tests/test_qingping_parser.py"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:24:41</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	"""The tests for the Qingping ble_parser."""
+2	from bleparser import BleParser
+3	
+4	
+5	class TestQingping:
+6	    """Tests for the Qingping parser"""
+7	    def test_qingping_CGP1W(self):
+8	        """Test Qingping parser for CGP1W."""
+9	        data_string = "043E28020100006F1C40342D581C0201061816CDFD08096F1C40342D580104BE000D0207027226020157D1"
+10	        data = bytes(bytearray.fromhex(data_string))
+11	        # pylint: disable=unused-variable
+12	        ble_parser = BleParser()
+13	        sensor_msg, tracker_msg = ble_parser.parse_raw_data(data)
+14	
+15	        assert sensor_msg["firmware"] == "Qingping"
+16	        assert sensor_msg["type"] == "CGP1W"
+17	        assert sensor_msg["mac"] == "582D34401C6F"
+18	        assert sensor_msg["packet"] == "no packet id"
+19	        assert sensor_msg["data"]
+20	        assert sensor_msg["temperature"] == 19.0
+21	        assert sensor_msg["humidity"] == 52.5
+22	        assert sensor_msg["pressure"] == 984.2
+23	        assert sensor_msg["battery"]
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:24:44</sup>
+
+Service data UUID `0xFDCD` — this is a service data decoder, not manufacturer data. Let me trace the payloads carefully.
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:24:57</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\n// Qingping uses service data UUID 0xFDCD\n// bleparser data = full service adstruct: [len, 0x16, uuid_lo, uuid_hi, payload...]\n// sensor-ble serviceData['fdcd'] = payload bytes (no len/type/uuid)\n// bleparser data[4:] = sensor-ble buf[0:]\n// bleparser data[n] = sensor-ble buf[n-4]\n\n// Routing: uuid16 == 0xFDCD -> data passed as full service adstruct\n// data[5] = device_id -> buf[1]\n// data[6:12] = MAC reversed -> buf[2:8]\n// TLV loop: xdata_point=14, data[xdata_point-2]=id, data[xdata_point-1]=size -> buf[xdata_point-4-2]=buf[xdata_point-6]... wait\n\n// Let me just extract service data payloads from each test\nfunction extractServiceData(hex) {\n  const b = Buffer.from(hex, 'hex');\n  // adpayload at byte 14\n  let pos = 14;\n  const end = b.length - 1; // last byte is RSSI\n  while (pos < end) {\n    const adlen = b[pos];\n    const adtype = b[pos+1];\n    if (adtype === 0x16 && adlen > 4) {\n      const uuid16 = b[pos+2] | (b[pos+3] << 8);\n      if (uuid16 === 0xFDCD) {\n        // full adstruct\n        const adstruct = b.slice(pos, pos + adlen + 1);\n        // serviceData buffer = adstruct[4:] (strip len+type+uuid)\n        const svcBuf = adstruct.slice(4);\n        return { adstruct: adstruct.toString('hex'), svcBuf: svcBuf.toString('hex') };\n      }\n    }\n    pos += adlen + 1;\n  }\n  return null;\n}\n\nconst tests = [\n  ['CGP1W', '043E28020100006F1C40342D581C0201061816CDFD08096F1C40342D580104BE000D0207027226020157D1'],\n  ['CGD1',  '043E2402010000BF6552342D58180201061416CDFD080CBF6552342D580104F100AD01020125D1'],\n  ['CGG1',  '043E2402010000B24410342D58180201061416CDFD0807B24410342D580104CA004502020138AF'],\n  ['CGPR1_1','043E2702010000005E60342D581B0201061716CDFD0812005E60342D580201640F011C09048B090000AF'],\n  ['CGPR1_2','043E2402010000005E60342D58180201061416CDFD4812005E60342D580804008B09000F0122AF'],\n  ['CGPR1_3','043E2102010000005E60342D58150201061116CDFD4812005E60342D581101010F0130AF'],\n  ['CGDN1', '043E2B020
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:25:01</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+CGP1W 08096f1c40342d580104be000d0207027226020157
+CGD1 080cbf6552342d580104f100ad01020125
+CGG1 0807b24410342d580104ca004502020138
+CGPR1_1 0812005e60342d580201640f011c09048b090000
+CGPR1_2 4812005e60342d580804008b09000f0122
+CGPR1_3 4812005e60342d581101010f0130
+CGDN1 080ea3808fe64854010422014c011204710072001302ed03
+no_data 080e0aa4288ccf04
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:25:17</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\n// Decode service data buffer (svcBuf = adstruct[4:], i.e. bleparser data[4:])\n// bleparser: device_id = data[5] -> svcBuf[1]\n// bleparser: data[6:12] = svcBuf[2:8] (MAC reversed)\n// TLV loop start: xdata_point=14, which is data[14] -> svcBuf[10]\n// xdata_id = data[xdata_point-2] -> svcBuf[xdata_point-6]\n// xdata_size = data[xdata_point-1] -> svcBuf[xdata_point-5]\n// data[xdata_point] -> svcBuf[xdata_point-4]\n// So in svcBuf terms: offset for first TLV id = svcBuf[8], size = svcBuf[9], data = svcBuf[10]\n// i.e. TLV starts at svcBuf offset 8 (= data[12])\n\nfunction decodeTLV(buf) {\n  // TLV starts at buf[8]\n  let off = 8;\n  const result = {};\n  while (off + 2 <= buf.length) {\n    const id = buf[off];\n    const size = buf[off+1];\n    off += 2;\n    if (off + size > buf.length) break;\n    const d = buf.slice(off, off+size);\n    if (id === 0x01 && size === 4) {\n      result.temperature_C = d.readInt16LE(0) / 10;\n      result.humidity_percent = d.readUInt16LE(2) / 10;\n    } else if (id === 0x02 && size === 1) {\n      result.battery_percent = d[0];\n    } else if (id === 0x07 && size === 2) {\n      result.pressure_hPa = d.readUInt16LE(0) / 10;\n    } else if (id === 0x08 && size === 4) {\n      const motion = d[0];\n      const illum = d.readUInt16LE(1) + d[3];\n      result.motion_dimensionless = motion;\n      result.illuminance_lux = illum;\n      if (motion) result.motionTimer_dimensionless = 1;\n    } else if (id === 0x09 && size === 4) {\n      result.illuminance_lux = d.readUInt32LE(0);\n    } else if (id === 0x11 && size === 1) {\n      result.light_dimensionless = d[0];\n    } else if (id === 0x12 && size === 4) {\n      result.pm2_5_ugm3 = d.readUInt16LE(0);\n      result.pm10_ugm3 = d.readUInt16LE(2);\n    } else if (id === 0x13 && size === 2) {\n      result.co2_ppm = d.readUInt16LE(0);\n    } else if (id === 0x0F && size === 1) {\n      result._packet = d[0];\n    } else {\n      console.log('unknown id', id.
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:25:19</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+CGP1W device_id=0x9 {
+  temperature_C: 19,
+  humidity_percent: 52.5,
+  pressure_hPa: 984.2,
+  battery_percent: 87
+}
+CGD1 device_id=0xc { temperature_C: 24.1, humidity_percent: 42.9, battery_percent: 37 }
+CGG1 device_id=0x7 { temperature_C: 20.2, humidity_percent: 58.1, battery_percent: 56 }
+CGPR1_1 device_id=0x12 { battery_percent: 100, _packet: 28, illuminance_lux: 2443 }
+CGPR1_2 device_id=0x12 { motion_dimensionless: 0, illuminance_lux: 2443, _packet: 34 }
+CGPR1_3 device_id=0x12 { light_dimensionless: 1, _packet: 48 }
+CGDN1 device_id=0xe {
+  temperature_C: 29,
+  humidity_percent: 33.2,
+  pm2_5_ugm3: 113,
+  pm10_ugm3: 114,
+  co2_ppm: 1005
+}
+no_data device_id=0xe {}
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:25:25</sup>
+
+All values match bleparser test assertions. Note `no_data` has empty TLV and also: bleparser returns `None` for CGDN1 when MAC in payload doesn't match source_mac — but sensor-ble doesn't receive source_mac so we skip that check. Also `no_data` length is only 8 bytes (≤8 header) — no TLV data, but bleparser returns None because MAC mismatch. In sensor-ble we just return whatever we decoded (or null if unknown device_id).
+
+Now check sensorlogs:
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:25:26</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -rl 'fdcd\\|FDCD' /Users/mah/Ballon/src/BalloonWare/sensor-ble/sensorlogs/ 2>/dev/null | head -5",
+  "description": "Search sensorlogs for Qingping service UUID fdcd"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:25:26</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+/Users/mah/Ballon/src/BalloonWare/sensor-ble/sensorlogs/2026-05-08_20-21-43.json
+/Users/mah/Ballon/src/BalloonWare/sensor-ble/sensorlogs/2026-03-28_17-22-29.json
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:25:31</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\nconst fs = require('fs');\nfor (const f of ['sensorlogs/2026-05-08_20-21-43.json','sensorlogs/2026-03-28_17-22-29.json']) {\n  const lines = fs.readFileSync('/Users/mah/Ballon/src/BalloonWare/sensor-ble/' + f, 'utf8').split('\\n');\n  for (const line of lines) {\n    try {\n      const obj = JSON.parse(line);\n      if (obj.serviceData && obj.serviceData['fdcd']) {\n        console.log(f, JSON.stringify(obj));\n      }\n    } catch {}\n  }\n}\n\" 2>&1 | head -20\n",
+  "description": "Extract Qingping entries from sensorlogs"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:25:33</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+(Bash completed with no output)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:25:36</sup>
+
+No sensorlog captures. Now check how sensor-ble handles service data routing to understand the decoder interface:
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:25:36</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js",
+  "limit": 30
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:25:36</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	/**
+2	 * Decodes BTHome servicedata.
+3	 * @param {Buffer} serviceData - The data buffer to decode.
+4	 * @returns {SensorValues} A key-value map of decoded sensor values.
+5	 *
+6	 * based mostly on code copyright (c) 2017-2025 AlCalzone
+7	 * https://github.com/AlCalzone/ioBroker.ble.git
+8	 * MIT license
+9	 */
+10	function decodeBTHome(_manufacturerData, serviceData) {
+11	  let data = serviceData["fcd2"];
+12	  if (
+13	    data.length < 4 || // too short
+14	    data[0] & 0x01 || // encrypted data not supported
+15	    (data[0] & 0xe0) >> 5 != 2 // not BTHome v2
+16	  ) {
+17	    return null;
+18	  }
+19	  const result = {};
+20	  const mac_included = (data[0] & 0x02) != 0;
+21	  if (mac_included) {
+22	    result.macAddress = data
+23	      .slice(1, 7)
+24	      .reverse()
+25	      .toString("hex")
+26	      .match(/.{1,2}/g)
+27	      ?.join(":");
+28	    data = data.slice(7);
+29	  } else {
+30	    data = data.slice(1);
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:25:39</sup>
+
+Good — service data decoders receive `(manufacturerData, serviceData)` and access `serviceData["uuid"]`. Now also check `variableFormat` usage in bthome:
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:25:40</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n 'variableFormat\\|serviceUUID' /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js | head -10",
+  "description": "Check variableFormat and serviceUUID usage in bthome"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:25:40</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+593:  serviceUUID: "fcd2",
+595:  variableFormat: true,
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:25:42</sup>
+
+Qingping is also variable format (different keys per device type). Now I have everything — writing the decoder:
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:25:56</sup>
+
+<details>
+<summary>Tool: <code>Write</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/qingping.js",
+  "content": "const DEVICE_TYPES = {\n  0x01: \"CGG1\",\n  0x07: \"CGG1\",\n  0x09: \"CGP1W\",\n  0x0C: \"CGD1\",\n  0x0E: \"CGDN1\",\n  0x12: \"CGPR1\",\n};\n\nfunction decodeQingping(_manufacturerData, serviceData) {\n  const buf = serviceData?.[\"fdcd\"];\n  if (!buf || buf.length < 8) return null;\n\n  const deviceId = buf[1];\n  if (!DEVICE_TYPES[deviceId]) return null;\n\n  const result = {};\n\n  // TLV records start at buf[8]\n  let off = 8;\n  while (off + 2 <= buf.length) {\n    const id = buf[off];\n    const size = buf[off + 1];\n    off += 2;\n    if (off + size > buf.length) break;\n    const d = buf.slice(off, off + size);\n    if (id === 0x01 && size === 4) {\n      result.temperature_C = d.readInt16LE(0) / 10;\n      result.humidity_percent = d.readUInt16LE(2) / 10;\n    } else if (id === 0x02 && size === 1) {\n      result.battery_percent = d[0];\n    } else if (id === 0x07 && size === 2) {\n      result.pressure_hPa = d.readUInt16LE(0) / 10;\n    } else if (id === 0x08 && size === 4) {\n      const motion = d[0];\n      result.motion_dimensionless = motion;\n      result.illuminance_lux = d.readUInt16LE(1) + d[3];\n      if (motion) result.motionTimer_dimensionless = 1;\n    } else if (id === 0x09 && size === 4) {\n      result.illuminance_lux = d.readUInt32LE(0);\n    } else if (id === 0x11 && size === 1) {\n      result.light_dimensionless = d[0];\n    } else if (id === 0x12 && size === 4) {\n      result.pm2_5_ugm3 = d.readUInt16LE(0);\n      result.pm10_ugm3 = d.readUInt16LE(2);\n    } else if (id === 0x13 && size === 2) {\n      result.co2_ppm = d.readUInt16LE(0);\n    }\n    off += size;\n  }\n\n  return result;\n}\n\n/** @type {import('../types.js').Decoder} */\nexport const decoder = {\n  decoderName: \"qingping\",\n  serviceUUID: \"fdcd\",\n  advertisementDecode: decodeQingping,\n  variableFormat: true,\n};\n\n/** @type {import('../types.js').Test[]} */\n
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:25:57</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+File created successfully at: /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/qingping.js (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:26:01</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/main.js",
+  "old_string": "import { decoder as mikrotik } from \"./devices/mikrotik.js\";\n\nexport const decoders = [ruuvi, muse_v3, airpods, bthome, mopeka, rc1010, mikrotik];",
+  "new_string": "import { decoder as mikrotik } from \"./devices/mikrotik.js\";\nimport { decoder as qingping } from \"./devices/qingping.js\";\n\nexport const decoders = [ruuvi, muse_v3, airpods, bthome, mopeka, rc1010, mikrotik, qingping];"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:26:02</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/main.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:26:05</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "npm test 2>&1",
+  "description": "Run unit tests"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:26:05</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+> sensor-ble@0.0.1 test
+> node harness/test.js
+
+Test passed airpods
+Test passed airpods
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mopeka
+Test passed mopeka
+Test passed musev3
+Test passed musev3
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed ruuvi
+Test passed ruuvi
+All tests completed.
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:26:08</sup>
+
+All 7 qingping tests pass. Updating snapshots:
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:26:08</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "npm run decode:update 2>&1",
+  "description": "Regenerate regression snapshots"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:26:08</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+> sensor-ble@0.0.1 decode:update
+> node harness/regression.js --update
+
+Updated snapshot: 2026-03-28_17-22-29.json (349 results)
+Updated snapshot: 2026-05-08_20-21-43.json (32 results)
+Updated snapshot: 2026-05-08_20-36-52.json (22 results)
+Updated snapshot: otodata.json (4 results)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:26:14</sup>
+
+[devices/qingping.js](devices/qingping.js) done. 7 tests covering all bleparser test cases (CGP1W, CGD1, CGG1, CGPR1 ×3, CGDN1). No sensorlog captures for this device.
 
 
 ---

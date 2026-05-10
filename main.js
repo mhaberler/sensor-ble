@@ -5,5 +5,6 @@ import { decoder as bthome } from "./devices/bthome.js";
 import { decoder as mopeka } from "./devices/mopeka.js";
 import { decoder as rc1010 } from "./devices/rc1010.js";
 import { decoder as mikrotik } from "./devices/mikrotik.js";
+import { decoder as qingping } from "./devices/qingping.js";
 
-export const decoders = [ruuvi, muse_v3, airpods, bthome, mopeka, rc1010, mikrotik];
+export const decoders = [ruuvi, muse_v3, airpods, bthome, mopeka, rc1010, mikrotik, qingping];
