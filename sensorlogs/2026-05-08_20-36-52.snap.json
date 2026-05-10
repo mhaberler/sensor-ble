@@ -103,7 +103,7 @@
     "time": "1778272618012000000",
     "result": {
       "voltage_V": 12.83,
-      "distance (m)_m": 212.20000000000002,
+      "distance (m)_m": 212.2,
       "current_A": 0.71,
       "speed_m/s": -1.28,
       "acceleration_m/s²": 0.696
@@ -125,8 +125,8 @@
     "time": "1778272620017000000",
     "result": {
       "voltage_V": 12.21,
-      "distance (m)_m": 212.20000000000002,
-      "current_A": 1.4000000000000001,
+      "distance (m)_m": 212.2,
+      "current_A": 1.4,
       "speed_m/s": 1.06,
       "acceleration_m/s²": 0.632
     }
@@ -180,7 +180,7 @@
     "result": {
       "voltage_V": 10.99,
       "distance (m)_m": 212.9,
-      "current_A": 0.34900000000000003,
+      "current_A": 0.349,
       "speed_m/s": 2.26,
       "acceleration_m/s²": 0.428
     }
@@ -191,9 +191,9 @@
     "time": "1778272629561000000",
     "result": {
       "voltage_V": 10.6,
-      "distance (m)_m": 212.60000000000002,
+      "distance (m)_m": 212.6,
       "current_A": 1.35,
-      "speed_m/s": 0.27999999999999997,
+      "speed_m/s": 0.28,
       "acceleration_m/s²": 0.36
     }
   },
@@ -225,7 +225,7 @@
     "time": "1778272634354000000",
     "result": {
       "voltage_V": 10.75,
-      "distance (m)_m": 213.10000000000002,
+      "distance (m)_m": 213.1,
       "current_A": 2.14,
       "speed_m/s": 1.44,
       "acceleration_m/s²": 0.412
@@ -240,7 +240,7 @@
       "distance (m)_m": 212.4,
       "current_A": 0.92,
       "speed_m/s": 1.28,
-      "acceleration_m/s²": 0.5419999999999999
+      "acceleration_m/s²": 0.542
     }
   },
   {

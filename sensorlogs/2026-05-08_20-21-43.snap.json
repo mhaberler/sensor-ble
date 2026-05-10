@@ -510,7 +510,7 @@
     "time": "1778271731135000000",
     "result": {
       "voltage_V": 11.64,
-      "distance (m)_m": 212.60000000000002,
+      "distance (m)_m": 212.6,
       "current_A": 0.75,
       "speed_m/s": 0.72,
       "acceleration_m/s²": 0.692

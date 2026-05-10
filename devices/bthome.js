@@ -7,10 +7,20 @@
  * https://github.com/AlCalzone/ioBroker.ble.git
  * MIT license
  */
+const buttonEvents = {
+  0x01: "press",
+  0x02: "double_press",
+  0x03: "triple_press",
+  0x04: "long_press",
+  0x05: "long_double_press",
+  0x06: "long_triple_press",
+  0x80: "hold_press",
+};
+
 function decodeBTHome(_manufacturerData, serviceData) {
   let data = serviceData["fcd2"];
   if (
-    data.length < 4 || // too short
+    data.length < 2 || // too short
     data[0] & 0x01 || // encrypted data not supported
     (data[0] & 0xe0) >> 5 != 2 // not BTHome v2
   ) {
@@ -29,6 +39,11 @@ function decodeBTHome(_manufacturerData, serviceData) {
   } else {
     data = data.slice(1);
   }
+
+  // Collect sensor items for duplicate-postfix handling
+  const items = [];
+  let buttonCount = 0;
+
   while (data.length > 0) {
     const objectId = data[0];
     if (objectId === 0x00) {
@@ -40,33 +55,25 @@ function decodeBTHome(_manufacturerData, serviceData) {
         ? data.readIntLE(1, def.size)
         : data.readUIntLE(1, def.size);
       if (def.factor) {
-        value *= def.factor;
+        const places = Math.round(-Math.log10(def.factor));
+        value = Math.round(value * def.factor * 10 ** places) / 10 ** places;
       }
       let key = def.label;
       if (def.unit) {
         key += `_${def.unit}`;
       }
-      result[key] = value;
+      items.push({ key, value });
       data = data.slice(1 + def.size);
     } else if (binarySensorDefinitions.has(objectId)) {
       const def = binarySensorDefinitions.get(objectId);
-      result[def.label] = data[1] === 0x01;
+      items.push({ key: def.label, value: data[1] === 0x01 });
       data = data.slice(2);
     } else if (objectId === 0x3a) {
       // button event
+      buttonCount++;
       const eventId = data[1];
-      if (eventId !== 0x00) {
-        const buttonEvents = {
-          0x01: "press",
-          0x02: "double_press",
-          0x03: "triple_press",
-          0x04: "long_press",
-          0x05: "long_double_press",
-          0x06: "long_triple_press",
-          0x80: "hold_press",
-        };
-        result.button = buttonEvents[eventId];
-      }
+      const buttonKey = `button_${buttonCount}`;
+      result[buttonKey] = buttonEvents[eventId] ?? null;
       data = data.slice(2);
     } else if (objectId === 0x3c) {
       const eventId = data[1];
@@ -121,6 +128,26 @@ function decodeBTHome(_manufacturerData, serviceData) {
       return {};
     }
   }
+
+  // Apply duplicate-postfix for sensor items with repeated keys
+  const keyCounts = {};
+  for (const { key } of items) keyCounts[key] = (keyCounts[key] || 0) + 1;
+  const keyIdx = {};
+  for (const { key, value } of items) {
+    if (keyCounts[key] > 1) {
+      keyIdx[key] = (keyIdx[key] || 0) + 1;
+      result[`${key}_${keyIdx[key]}`] = value;
+    } else {
+      result[key] = value;
+    }
+  }
+
+  // Collapse single button_1 back to button for backward compatibility
+  if (buttonCount === 1 && result.button_1 !== undefined) {
+    if (result.button_1 !== null) result.button = result.button_1;
+    delete result.button_1;
+  }
+
   return result;
 }
 
@@ -606,10 +633,10 @@ export const tests = [
       serviceData: { fcd2: "403a013c020653034142435403313233" },
     },
     expected: {
-      button: "press",
       dimmerRotateRight: 6,
       text: "ABC",
       raw: "313233",
+      button: "press",
     },
   },
   {
@@ -645,10 +672,10 @@ export const tests = [
     },
     expected: {
       packetId: 74,
-      humidity_percent: 40,
-      pressure_hPa: 1023.86,
       text: "BLABLAddadasdasXYZ",
       raw: "313233",
+      humidity_percent: 40,
+      pressure_hPa: 1023.86,
     },
   },
   {
@@ -661,10 +688,10 @@ export const tests = [
     expected: {
       macAddress: "a5:32:39:43:ca:48",
       packetId: 47,
-      humidity_percent: 40,
-      pressure_hPa: 1023.86,
       text: "BLABLAddadasdasXYZ",
       raw: "313233",
+      humidity_percent: 40,
+      pressure_hPa: 1023.86,
     },
   },
   {
@@ -677,6 +704,9 @@ export const tests = [
     expected: {
       macAddress: "a5:32:39:43:ca:48",
       packetId: 44,
+      dimmerRotateRight: 6,
+      text: "BLABLAddadasdasXYZ",
+      raw: "313233",
       temperature_C: 35,
       humidity_percent: 40,
       pressure_hPa: 1023.86,
@@ -685,9 +715,6 @@ export const tests = [
       co2_ppm: 1208,
       "tvoc_ug/m3": 350,
       button: "press",
-      dimmerRotateRight: 6,
-      text: "BLABLAddadasdasXYZ",
-      raw: "313233",
     },
   },
   { // testcase from manual https://bthome.io/format/
@@ -741,11 +768,48 @@ export const tests = [
       serviceData: { fcd2: "403a013c0206530341424354033132336503" },
     },
     expected: {
-      button: "press",
       dimmerRotateRight: 6,
       text: "ABC",
       raw: "313233",
-      settings_revision: 3
+      settings_revision: 3,
+      button: "press",
+    },
+  },
+  {
+    // bleparser: generic boolean binary sensor (3-byte payload — min-length fix)
+    given: { serviceData: { fcd2: "400f01" } },
+    expected: { "generic boolean": true },
+  },
+  {
+    // bleparser: door open binary sensor
+    given: { serviceData: { fcd2: "401a01" } },
+    expected: { door: true },
+  },
+  {
+    // bleparser: motion detected binary sensor
+    given: { serviceData: { fcd2: "402101" } },
+    expected: { motion: true },
+  },
+  {
+    // bleparser: 1-byte humidity
+    given: { serviceData: { fcd2: "402e33" } },
+    expected: { humidity_percent: 51 },
+  },
+  {
+    // bleparser: two temperature objects — duplicate-postfix handling
+    given: { serviceData: { fcd2: "40450101450301" } },
+    expected: { temperature_C_1: 25.7, temperature_C_2: 25.9 },
+  },
+  {
+    // bleparser: four button objects — multi-button postfix, zero events = null
+    given: { serviceData: { fcd2: "4400c201643a003a033a013a00" } },
+    expected: {
+      packetId: 194,
+      button_1: null,
+      button_2: "triple_press",
+      button_3: "press",
+      button_4: null,
+      battery_percent: 100,
     },
   },
 ];

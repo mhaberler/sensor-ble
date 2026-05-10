@@ -6,8 +6,8 @@
 | **Session ID** | `d23acc51-ad18-49ac-b576-358ca4c3a788` |
 | **Working Dir** | `/Users/mah/Ballon/src/BalloonWare/sensor-ble` |
 | **Started** | 10/05/2026, 16:04:19 |
-| **Last Updated** | 10/05/2026, 17:19:27 |
-| **Messages** | 320 |
+| **Last Updated** | 10/05/2026, 17:33:09 |
+| **Messages** | 408 |
 
 ---
 
@@ -6114,6 +6114,1691 @@ All done. Two bugs fixed in [devices/mikrotik.js](devices/mikrotik.js):
 2. Battery masked `& 0x7F` — MSB status flag no longer inflates percentage
 
 All 6 mikrotik tests pass (4 original with updated expected values, 2 new Theengs cases covering negative accel and flags). Snapshots updated.
+
+
+---
+
+## User <sup>10/05/2026, 17:25:32</sup>
+
+<ide_opened_file>The user opened the file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/airpods.js in the IDE. This may or may not be related to the current task.</ide_opened_file>
+
+cross check the bthome decoder against bleparser bthome
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:25:40</sup>
+
+<details>
+<summary>Tool: <code>Agent</code></summary>
+
+```json
+{
+  "description": "Explore bthome decoder and bleparser source",
+  "subagent_type": "Explore",
+  "prompt": "Read these files in full and report their complete contents (no truncation):\n1. /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js\n2. /Users/mah/Ballon/src/BalloonWare/sensor-ble/bleparser/package/bleparser/bthome.py (if exists)\n3. /Users/mah/Ballon/src/BalloonWare/sensor-ble/bleparser/package/tests/test_bthome.py (if exists)\n\nAlso check if there's a Theengs bthome descriptor:\n- ls /Users/mah/Ballon/src/BalloonWare/sensor-ble/theengs_decoder/src/devices/ | grep -i bthome\n- or ls /Users/mah/Ballon/src/BalloonWare/sensor-ble/decoder/src/devices/ | grep -i bthome\n\nReport ALL file contents verbatim — this is needed for a cross-check audit."
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:26:09</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+Perfect! Now I have all the key files. Let me create a comprehensive report.
+
+---
+
+## BTHome Cross-Check Audit Report
+
+I've successfully read all the BTHome-related files. Here is the complete contents of each file:
+
+### 1. **JavaScript Decoder: `/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js`**
+   - Full file contents provided above (752 lines)
+   - Implements BTHome V2 format decoding for BLE service data
+   - Key features:
+     - MAC address extraction (if included in payload)
+     - Multi-level sensor definitions (65+ sensor types)
+     - Binary sensor definitions (23 sensor types)
+     - Button events handling (press, double-press, triple-press, long-press variants)
+     - Dimmer/rotation controls (RotateLeft, RotateRight)
+     - Special handling for text fields (0x53), raw data (0x54), timestamps (0x50)
+     - Device type (0xF0), firmware versions (0xF1: 4-byte, 0xF2: 3-byte)
+     - 12 comprehensive test cases including regression tests for truncated fields
+
+### 2
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:26:12</sup>
+
+The agent summary is high-level. Let me read the actual files directly.
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:26:13</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:26:13</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	/**
+2	 * Decodes BTHome servicedata.
+3	 * @param {Buffer} serviceData - The data buffer to decode.
+4	 * @returns {SensorValues} A key-value map of decoded sensor values.
+5	 *
+6	 * based mostly on code copyright (c) 2017-2025 AlCalzone
+7	 * https://github.com/AlCalzone/ioBroker.ble.git
+8	 * MIT license
+9	 */
+10	function decodeBTHome(_manufacturerData, serviceData) {
+11	  let data = serviceData["fcd2"];
+12	  if (
+13	    data.length < 4 || // too short
+14	    data[0] & 0x01 || // encrypted data not supported
+15	    (data[0] & 0xe0) >> 5 != 2 // not BTHome v2
+16	  ) {
+17	    return null;
+18	  }
+19	  const result = {};
+20	  const mac_included = (data[0] & 0x02) != 0;
+21	  if (mac_included) {
+22	    result.macAddress = data
+23	      .slice(1, 7)
+24	      .reverse()
+25	      .toString("hex")
+26	      .match(/.{1,2}/g)
+27	      ?.join(":");
+28	    data = data.slice(7);
+29	  } else {
+30	    data = data.slice(1);
+31	  }
+32	  while (data.length > 0) {
+33	    const objectId = data[0];
+34	    if 
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:26:16</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/bleparser/package/bleparser/bthome.py"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:26:16</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	"""Parser for BTHome (DIY sensors) advertisements"""
+2	import logging
+3	import struct
+4	from typing import Any
+5	from Cryptodome.Cipher import AES
+6	
+7	from .bthome_const import MEAS_TYPES
+8	from .helpers import (
+9	    to_mac,
+10	    to_unformatted_mac,
+11	)
+12	
+13	_LOGGER = logging.getLogger(__name__)
+14	
+15	
+16	def parse_uint(data_obj: bytes, factor: float = 1.0) -> float:
+17	    """Convert bytes (as unsigned integer) and factor to float."""
+18	    decimal_places = -int(f"{factor:e}".split("e")[-1])
+19	    return round(
+20	        int.from_bytes(data_obj, "little", signed=False) * factor, decimal_places
+21	    )
+22	
+23	
+24	def parse_int(data_obj: bytes, factor: float = 1.0) -> float:
+25	    """Convert bytes (as signed integer) and factor to float."""
+26	    decimal_places = -int(f"{factor:e}".split("e")[-1])
+27	    return round(
+28	        int.from_bytes(data_obj, "little", signed=True) * factor, decimal_places
+29	    )
+30	
+31	
+32	def parse_float(data_obj: bytes, factor: float = 1
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:26:20</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/bleparser/package/bleparser/bthome_const.py"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:26:20</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	"""Constants for BTHome measurements."""
+2	import dataclasses
+3	from typing import Optional
+4	
+5	
+6	@dataclasses.dataclass
+7	class MeasTypes:
+8	    meas_format: str
+9	    unit_of_measurement: Optional[str] = None
+10	    data_length: int = 1
+11	    data_format: str = "unsigned_integer"
+12	    factor: float = 1
+13	
+14	
+15	MEAS_TYPES: dict[int, MeasTypes] = {
+16	    0x00: MeasTypes(
+17	        meas_format="packet",
+18	    ),
+19	    0x01: MeasTypes(
+20	        meas_format="battery",
+21	        unit_of_measurement="%",
+22	    ),
+23	    0x02: MeasTypes(
+24	        meas_format="temperature",
+25	        unit_of_measurement="°C",
+26	        data_length=2,
+27	        data_format="signed_integer",
+28	        factor=0.01,
+29	    ),
+30	    0x03: MeasTypes(
+31	        meas_format="humidity",
+32	        unit_of_measurement="%",
+33	        data_length=2,
+34	        factor=0.01,
+35	    ),
+36	    0x04: MeasTypes(
+37	        meas_format="pressure",
+38	        unit_of_measurement="mbar",
+39	        data
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:26:22</sup>
+
+Now I have a clear picture. Let me read the bleparser test files briefly to check for test cases worth porting:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:26:24</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "wc -l /Users/mah/Ballon/src/BalloonWare/sensor-ble/bleparser/package/tests/test_bthome_v1.py /Users/mah/Ballon/src/BalloonWare/sensor-ble/bleparser/package/tests/test_bthome_v2.py 2>/dev/null; ls /Users/mah/Ballon/src/BalloonWare/sensor-ble/bleparser/package/tests/test_bthome* 2>/dev/null",
+  "description": "Check bleparser bthome test files"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:26:25</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+286 /Users/mah/Ballon/src/BalloonWare/sensor-ble/bleparser/package/tests/test_bthome_v1.py
+     513 /Users/mah/Ballon/src/BalloonWare/sensor-ble/bleparser/package/tests/test_bthome_v2.py
+     799 total
+/Users/mah/Ballon/src/BalloonWare/sensor-ble/bleparser/package/tests/test_bthome_v1.py
+/Users/mah/Ballon/src/BalloonWare/sensor-ble/bleparser/package/tests/test_bthome_v2.py
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:26:27</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/bleparser/package/tests/test_bthome_v2.py",
+  "limit": 200
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:26:27</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	"""The tests for the BTHome V2 (DIY sensor) ble_parser."""
+2	from bleparser import BleParser
+3	
+4	
+5	class TestBTHome:
+6	    """Tests for the BTHome V2 (DIY sensor) parser"""
+7	    def test_bthome_v2_packet_and_battery(self):
+8	        """Test BTHome V2 parser for battery measurement and packet number"""
+9	        data_string = "043E1802010000A5808FE648540C0201060816D2FC4000090161CC"
+10	        data = bytes(bytearray.fromhex(data_string))
+11	
+12	        # pylint: disable=unused-variable
+13	        ble_parser = BleParser()
+14	        sensor_msg, tracker_msg = ble_parser.parse_raw_data(data)
+15	
+16	        assert sensor_msg["firmware"] == "BTHome V2"
+17	        assert sensor_msg["type"] == "BTHome"
+18	        assert sensor_msg["mac"] == "5448E68F80A5"
+19	        assert sensor_msg["packet"] == 9
+20	        assert sensor_msg["data"]
+21	        assert sensor_msg["battery"] == 97
+22	        assert sensor_msg["rssi"] == -52
+23	
+24	    def test_bhtome_v2_temperature_and_humidity(self):
+25	  
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:26:30</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/bleparser/package/tests/test_bthome_v2.py",
+  "offset": 200,
+  "limit": 313
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:26:30</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+200	        assert sensor_msg["pm2.5"] == 3090
+201	        assert sensor_msg["pm10"] == 7170
+202	        assert sensor_msg["rssi"] == -36
+203	
+204	    def test_bthome_v2_binary(self):
+205	        """Test BTHome parser for binary sensor measurement"""
+206	        data_string = "043E1602010000A5808FE648540A0201060616D2FC400F01CC"
+207	        data = bytes(bytearray.fromhex(data_string))
+208	
+209	        # pylint: disable=unused-variable
+210	        ble_parser = BleParser()
+211	        sensor_msg, tracker_msg = ble_parser.parse_raw_data(data)
+212	
+213	        assert sensor_msg["firmware"] == "BTHome V2"
+214	        assert sensor_msg["type"] == "BTHome"
+215	        assert sensor_msg["mac"] == "5448E68F80A5"
+216	        assert sensor_msg["packet"] == "no packet id"
+217	        assert sensor_msg["data"]
+218	        assert sensor_msg["binary"] == 1
+219	        assert sensor_msg["rssi"] == -52
+220	
+221	    def test_bthome_v2_switch(self):
+222	        """Test BTHome parser for dew point measurem
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:26:33</sup>
+
+Now I have enough to do a comprehensive cross-check. Let me analyze the differences:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:26:52</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\n// Extract servicedata from bleparser raw HCI strings\n// Format: 043E<len>0201<event>00<MAC 6B LE><payload_len><ad structs...><rssi>\n// Ad payload starts at byte 14 (index 0x0E)\n// Find 0x16 adstruct (service data), strip len+type, get UUID16 LE + data\n\nfunction extract_sd(hex) {\n  const b = Buffer.from(hex, 'hex');\n  let i = 14; // ad payload start\n  while (i < b.length - 1) {\n    const len = b[i];\n    const type = b[i+1];\n    if (type === 0x16 && len >= 3) {\n      const uuid = b.readUInt16LE(i+2).toString(16).padStart(4,'0');\n      const data = b.slice(i+4, i+1+len).toString('hex');\n      return {uuid, data};\n    }\n    i += len + 1;\n  }\n}\n\nconst cases = [\n  ['battery+packet', '043E1802010000A5808FE648540C0201060816D2FC4000090161CC'],\n  ['temp+humid', '043E1A02010000A5808FE648540E0201060A16D2FC4002CA0903BF13CC'],\n  ['pressure', '043E1A02010000A5808FE648540E0201060A16D2FC40000C04138A01DC'],\n  ['illuminance', '043E1802010000A5808FE648540C0201060816D2FC4005138A14DC'],\n  ['weight_kg', '043E1702010000A5808FE648540B0201060716D2FC40065E1FDC'],\n  ['dewpoint', '043E1702010000A5808FE648540B0201060716D2FC4008CA06DC'],\n  ['energy', '043E1802010000A5808FE648540C0201060816D2FC400A138A14DC'],\n  ['power', '043E1802010000A5808FE648540C0201060816D2FC400B021B00DC'],\n  ['voltage', '043E1702010000A5808FE648540B0201060716D2FC400C020CDC'],\n  ['pm', '043E1A02010000A5808FE648540E0201060A16D2FC400D120C0E021CDC'],\n  ['binary', '043E1602010000A5808FE648540A0201060616D2FC400F01CC'],\n  ['switch', '043E1602010000A5808FE648540A0201060616D2FC401001DC'],\n  ['opening', '043E1602010000A5808FE648540A0201060616D2FC401100CC'],\n  ['co2', '043E1702010000A5808FE648540B0201060716D2FC4012E204CC'],\n  ['tvoc', '043E1702010000A5808FE648540B0201060716D2FC40133301CC'],\n  ['moisture', '043E1702010000A5808FE648540B0201060716D2FC40143301CC'],\n  ['door', '043E1602010000A5808FE648540A0201060616D2FC401A01CC'],\n  ['light', '043E1602010000A5808FE648540A020
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:27:27</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+battery+packet -> 4000090161
+temp+humid -> 4002ca0903bf13
+pressure -> 40000c04138a01
+illuminance -> 4005138a14
+weight_kg -> 40065e1f
+dewpoint -> 4008ca06
+energy -> 400a138a14
+power -> 400b021b00
+voltage -> 400c020c
+pm -> 400d120c0e021c
+binary -> 400f01
+switch -> 401001
+opening -> 401100
+co2 -> 4012e204
+tvoc -> 40133301
+moisture -> 40143301
+door -> 401a01
+light -> 401e01
+lock -> 401f01
+motion -> 402101
+smoke -> 402901
+humidity_1byte -> 402e33
+moisture_1byte -> 402f33
+count_2byte -> 403d3321
+count_4byte -> 403e33ae3221
+temp_1digit -> 40450101
+double_temp -> 40450101450301
+quad_button -> 4400c201643a003a033a013a00
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:27:29</sup>
+
+Good. Now let me run these through the JS decoder to see what it produces vs what bleparser expects:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:27:45</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\nimport('./devices/bthome.js').then(({decoder}) => {\n  const fn = decoder.advertisementDecode;\n  const cases = [\n    ['battery+packet', '4000090161', {packet:9, battery:97}],\n    ['temp+humid', '4002ca0903bf13', {temperature:25.06, humidity:50.55}],\n    ['pressure', '40000c04138a01', {packet:12, pressure:1008.83}],\n    ['illuminance', '4005138a14', {illuminance:13460.67}],\n    ['weight_kg', '40065e1f', {weight:80.3}],\n    ['dewpoint', '4008ca06', {dewpoint:17.38}],\n    ['energy', '400a138a14', {energy:1346.067}],\n    ['power', '400b021b00', {power:69.14}],\n    ['voltage', '400c020c', {voltage:3.074}],\n    ['pm', '400d120c0e021c', {'pm2.5':3090,'pm10':7170}],\n    ['binary', '400f01', {binary:1}],\n    ['switch', '401001', {switch:1}],\n    ['opening', '401100', {opening:0}],\n    ['co2', '4012e204', {co2:1250}],\n    ['tvoc', '40133301', {tvoc:307}],\n    ['moisture', '40143301', {moisture:3.07}],\n    ['door', '401a01', {door:1}],\n    ['light', '401e01', {light:1}],\n    ['lock', '401f01', {lock:1}],\n    ['motion', '402101', {motion:1}],\n    ['smoke', '402901', {smoke:1}],\n    ['humidity_1byte', '402e33', {humidity:51}],\n    ['moisture_1byte', '402f33', {moisture:51}],\n    ['count_2byte', '403d3321', {count:8499}],\n    ['count_4byte', '403e33ae3221', {count:556969523}],\n    ['temp_1digit', '40450101', {temperature:25.7}],\n    ['double_temp', '40450101450301', {temperature_1:25.7, temperature_2:25.9}],\n    ['quad_button', '4400c201643a003a033a013a00', {packet:194, battery:100, button_1:0, button_2:3, button_3:1, button_4:0}],\n  ];\n  \n  let bugs = [];\n  for (const [name, hex, expected] of cases) {\n    const sd = { fcd2: Buffer.from(hex, 'hex') };\n    const result = fn(null, sd);\n    for (const [k, v] of Object.entries(expected)) {\n      const got = result?.[k];\n      // map bleparser key to JS key\n      let jsKey = k;\n      if (k === 'battery' && typeof v === 'number') jsKey = 'battery_percent';\n      if (k
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:27:49</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+battery+packet -> {"packetId":9,"battery_percent":97}
+temp+humid -> {"temperature_C":25.060000000000002,"humidity_percent":50.550000000000004}
+pressure -> {"packetId":12,"pressure_hPa":1008.83}
+illuminance -> {"illuminance_lux":13460.67}
+weight_kg -> {"mass (kg)_kg":80.3}
+dewpoint -> {"dewpoint_°C":17.38}
+energy -> {"energy_kWh":1346.067}
+power -> {"power_W":69.14}
+voltage -> {"voltage_V":3.074}
+pm -> {"pm2.5_ug/m3":3090,"pm10_ug/m3":7170}
+binary -> null
+switch -> null
+opening -> null
+co2 -> {"co2_ppm":1250}
+tvoc -> {"tvoc_ug/m3":307}
+moisture -> {"moisture_percent":3.0700000000000003}
+door -> null
+light -> null
+lock -> null
+motion -> null
+smoke -> null
+humidity_1byte -> null
+moisture_1byte -> null
+count_2byte -> {"count":8499}
+count_4byte -> {"count":556969523}
+temp_1digit -> {"temperature_C":25.700000000000003}
+double_temp -> {"temperature_C":25.900000000000002}
+quad_button -> {"packetId":194,"battery_percent":100,"button":"press"}
+
+DISCREPANCIES:
+{
+  name: 'battery+packet',
+  field:
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:27:51</sup>
+
+Now I have a complete picture. Let me write the plan:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:27:52</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/.claude/plans/the-current-qingping-js-decoder-snappy-feather.md"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:27:52</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	# Plan: Fix mikrotik.js — two bugs found by Theengs cross-check
+2	
+3	## Context
+4	
+5	Cross-checked `devices/mikrotik.js` against `decoder/src/devices/Mikrotik_json.h` (Theengs) and the official MikroTik TG-BT5 advertisement format docs. Found two bugs that only manifest with negative acceleration values and battery values ≥ 128.
+6	
+7	---
+8	
+9	## Bugs
+10	
+11	### Bug 1: Acceleration integer parts read as unsigned (UInt8) instead of signed (Int8)
+12	
+13	`acc_x`, `acc_y`, `acc_z` are the **high bytes** of a signed 8.8 fixed-point int16. They must be read as signed (Int8) to produce correct results for negative accelerations.
+14	
+15	Current code (`devices/mikrotik.js` lines 11-15):
+16	```js
+17	const acc_x_frac = p.readUInt8(off++);
+18	const acc_x      = p.readUInt8(off++);   // BUG: should be readInt8
+19	const acc_y_frac = p.readUInt8(off++);
+20	const acc_y      = p.readUInt8(off++);   // BUG: should be readInt8
+21	const acc_z_frac = p.readUInt8(off++);
+22	const acc_z      = p.readUInt8(o
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:28:31</sup>
+
+<details>
+<summary>Tool: <code>Write</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/.claude/plans/the-current-qingping-js-decoder-snappy-feather.md",
+  "content": "# Plan: Cross-check bthome.js against bleparser bthome\n\n## Context\n\nCross-checked `devices/bthome.js` against `bleparser/package/bleparser/bthome.py` and `bthome_const.py`. Found several classes of bugs by running all bleparser V2 test payloads through the JS decoder.\n\n---\n\n## Bugs Found\n\n### Bug 1: Binary sensor values — JS returns boolean, bleparser returns integer (0/1)\n\n`binarySensorDefinitions` handler (bthome.js:53):\n```js\nresult[def.label] = data[1] === 0x01;   // returns true/false\n```\nBleparser returns integer 1 or 0. Tests and existing test cases expect boolean `true`/`false`. This is a design choice already made; the existing JS tests use booleans (`window: false`, `power: true`). **Not a bug — JS intentionally uses boolean.**\n\nBut: binary sensors with ids 0x0F (`generic boolean`) and 0x10 (`power`) and 0x11 (`opening`) are in the `binarySensorDefinitions` map and return boolean. Bleparser calls these `binary`, `switch`, `opening` and returns 1/0. The JS tests use `power: true` which aligns with JS behavior. This is fine.\n\n**However**: The JS decoder returns `null` for these payloads:\n- 0x0F (`generic boolean`): `400f01` → null\n- 0x10 (`power`/switch): `401001` → null\n- 0x11 (`opening`): `401100` → null\n- 0x1A (`door`): `401a01` → null\n- 0x1E (`light`): `401e01` → null\n- 0x1F (`lock`): `401f01` → null\n- 0x21 (`motion`): `402101` → null\n- 0x29 (`smoke`): `402901` → null\n- 0x2E (`humidity` 1-byte): `402e33` → null\n- 0x2F (`moisture` 1-byte): `402f33` → null\n\nInvestigation shows these return null because the decoder hits `console.log(\"Unsupported BTHome object ID ...\")` and returns `{}` — wait, it returns `{}` not `null`. But `{}` is truthy — decoder returns `{}`, not null.\n\nActually looking at the output: `binary -> null`. Why? Because `data.length < 4` check — the service data buffer `400f01` is 3 bytes, which is 
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:28:32</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/.claude/plans/the-current-qingping-js-decoder-snappy-feather.md has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:28:35</sup>
+
+Before finalizing, let me verify the minimum-length issue precisely and check what the existing tests rely on:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:28:42</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\n// Verify: what does 400f01 decode to if length check is relaxed?\n// Header byte 0x40 = 0100 0000: encrypted=0, mac_included=0, version=2\n// data[0] = 0x40, data[1] = 0x0F (generic boolean), data[2] = 0x01\n// binarySensorDefinitions has 0x0F: label='generic boolean', states {false:'Off', true:'On'}\n// result['generic boolean'] = (data[1+1] === 0x01) = (0x01 === 0x01) = true\n// data = data.slice(2) -> [0x01] -> [0x01], objectId=0x01 (battery) -- wait that's wrong\n// Let me re-read: after slicing header (slice(1)): data=[0x0F, 0x01]\n// objectId=0x0F, in binarySensorDefinitions, result['generic boolean']=data[1]===0x01=true, data=data.slice(2) -> empty\nconsole.log('payload analysis: 400f01');\nconsole.log('header=0x40, after slice(1): [0x0F, 0x01]');\nconsole.log('0x0F in binary sensors: label=generic boolean');\nconsole.log('result[generic boolean] = 0x01 === 0x01 = true');\nconsole.log('remaining: empty -> done');\nconsole.log('Expected output: {\\\"generic boolean\\\": true}');\n\"\n",
+  "description": "Verify minimum length fix behavior"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:28:53</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+payload analysis: 400f01
+header=0x40, after slice(1): [0x0F, 0x01]
+0x0F in binary sensors: label=generic boolean
+result[generic boolean] = 0x01 === 0x01 = true
+remaining: empty -> done
+Expected output: {"generic boolean": true}
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:29:02</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\n// Check: what is the minimum valid payload?\n// Header (1 byte) + smallest object: binary sensor (2 bytes: id + value) = 3 bytes total\n// Shortest multilevel: battery (1 byte id + 1 byte value) = 2 bytes after header = 3 bytes total\n// So minimum meaningful = 3 bytes. Check with data.length < 2 vs < 3.\n// But: header + nothing = 1 byte = invalid. header + partial = 2 bytes = could be just the object id missing value.\n// Safe minimum: data.length < 2 means reject 0 or 1 byte payloads only.\n// 3-byte payload like 400f01 would pass data.length < 2 (3 >= 2). \n// The existing tests have minimum 7 bytes ('4400ca0164 3a00' = 7). \n// Short regression tests: '40000553' = 4 bytes, '40000554' = 4 bytes.\n// So changing to < 2 is safe for all existing tests.\nconsole.log('Existing min test length:', '40000553'.length/2, 'bytes (4)');\nconsole.log('Shortest bleparser payload:', '400f01'.length/2, 'bytes (3)');\nconsole.log('data.length < 2 passes 3-byte payload: true');\n\"\n",
+  "description": "Verify minimum length threshold"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:29:04</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+Existing min test length: 4 bytes (4)
+Shortest bleparser payload: 3 bytes (3)
+data.length < 2 passes 3-byte payload: true
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:29:08</sup>
+
+Good. Now let me also verify the floating point rounding approach and the duplicate sensor semantics more carefully before writing the final plan:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:29:12</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\n// Test rounding approach for various factors\nconst cases = [\n  [0.01, 2506, 25.06],     // temperature: raw * 0.01\n  [0.01, 5055, 50.55],     // humidity\n  [0.001, 3074, 3.074],    // voltage\n  [0.001, 1346067, 1346.067], // energy\n  [0.01, 6914, 69.14],     // power\n  [0.01, 1738, 17.38],     // dewpoint\n];\nfor (const [factor, raw, expected] of cases) {\n  const raw_val = raw * factor;\n  const places = Math.round(-Math.log10(factor));\n  const rounded = Math.round(raw_val * 10**places) / 10**places;\n  const ok = rounded === expected;\n  if (!ok) console.log('FAIL', {factor, raw, raw_val, places, rounded, expected});\n  else console.log('OK', {factor, raw, rounded, expected});\n}\n\"\n",
+  "description": "Verify rounding formula for all affected factors"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:29:14</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+OK { factor: 0.01, raw: 2506, rounded: 25.06, expected: 25.06 }
+OK { factor: 0.01, raw: 5055, rounded: 50.55, expected: 50.55 }
+OK { factor: 0.001, raw: 3074, rounded: 3.074, expected: 3.074 }
+OK { factor: 0.001, raw: 1346067, rounded: 1346.067, expected: 1346.067 }
+OK { factor: 0.01, raw: 6914, rounded: 69.14, expected: 69.14 }
+OK { factor: 0.01, raw: 1738, rounded: 17.38, expected: 17.38 }
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:29:31</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\n// Verify duplicate sensor handling design\n// bleparser postfix: _1, _2 for each occurrence (1-indexed from first)\n// 'double_temp': payload 40450101450301\n// Two 0x45 objects: first=0x0101=257 LE * 0.1 = 25.7, second=0x0301=259 LE * 0.1 = 25.9  \n// bleparser: temperature_1=25.7, temperature_2=25.9\n// JS needs to: before writing, check if key already in result; if so, rename first as _1 and write new as _2\n// For clean implementation: two-pass or track counts map\n\n// Design option A: collect all (key, value) pairs in order, then postfix duplicates\n// Design option B: on second occurrence, rename existing + write new\n\n// Option A is cleaner. Pseudocode:\n// let items = []\n// ... decode each object, push {key, value}\n// count occurrences per key\n// write to result: if key appears > once, append _N (1-indexed)\n\n// Check: quad button payload 4400c201643a003a033a013a00\n// [0x00=packetId=194, 0x01=battery=100, 0x3A=button(event=0x00 skip?)]\n// bleparser: button_1=0, button_2=3, button_3=1, button_4=0\n// key observation: bleparser emits ALL button events, including event=0 (no event)\n// JS currently skips event=0x00 entirely\n\n// Fix: for buttons, emit null for event=0x00 (or 0 as integer)\n// bleparser uses integer 0 for no-event buttons\n\nconst payload = Buffer.from('4400c201643a003a033a013a00', 'hex');\n// header=0x44: mac_not_included, v2. data after slice(1)=\n// 00 c2 -> packetId=194\n// 01 64 -> battery=100 (0x64=100) \n// 3a 00 -> button event=0\n// 3a 03 -> button event=3 (triple_press)\n// 3a 01 -> button event=1 (press)\n// 3a 00 -> button event=0\nlet d = payload.slice(1);\nwhile (d.length > 0) {\n  const id = d[0];\n  console.log('id=0x'+id.toString(16), 'd[1]='+d[1]);\n  if (id === 0x00) d = d.slice(2);\n  else if (id === 0x01) d = d.slice(2);\n  else if (id === 0x3a) d = d.slice(2);\n  else break;\n}\n\"\n",
+  "description": "Verify quad button payload structure and duplicate handling design"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:29:33</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+id=0x0 d[1]=194
+id=0x1 d[1]=100
+id=0x3a d[1]=0
+id=0x3a d[1]=3
+id=0x3a d[1]=1
+id=0x3a d[1]=0
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:29:35</sup>
+
+Good. Now I have a complete, verified picture. Let me update the plan with precise fix specifications:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:30:08</sup>
+
+<details>
+<summary>Tool: <code>Write</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/.claude/plans/the-current-qingping-js-decoder-snappy-feather.md",
+  "content": "# Plan: Fix bthome.js — bugs found by bleparser cross-check\n\n## Context\n\nCross-checked `devices/bthome.js` against `bleparser/package/bleparser/bthome.py` + `bthome_const.py`.\nRan all 27 bleparser V2 test payloads through the JS decoder. Found 4 bugs.\n\n---\n\n## Bugs\n\n### Bug 1: Minimum-length check rejects valid 3-byte payloads\n\nLine 13: `data.length < 4` — rejects any payload shorter than 4 bytes.\n\nValid single-sensor payloads are 3 bytes (1 header + 1 object ID + 1 value byte). Example: `400f01` (generic boolean) → returns null instead of decoding.\n\nAffected bleparser test cases: binary, switch, opening, door, light, lock, motion, smoke, humidity_1byte, moisture_1byte.\n\n**Fix**: Change `data.length < 4` to `data.length < 2`.\n\n### Bug 2: Floating-point precision — raw multiplication without rounding\n\nLines 42-44:\n```js\nlet value = def.signed ? data.readIntLE(1, def.size) : data.readUIntLE(1, def.size);\nif (def.factor) value *= def.factor;\n```\n\nJS float multiplication introduces error: `2506 * 0.01 = 25.060000000000002`, `5055 * 0.01 = 50.550000000000004`. Bleparser uses `round()` with the correct decimal places.\n\n**Fix**: When `def.factor` is set, round to `Math.round(-Math.log10(def.factor))` decimal places:\n```js\nif (def.factor) {\n  const places = Math.round(-Math.log10(def.factor));\n  value = Math.round(value * def.factor * 10 ** places) / 10 ** places;\n}\n```\n\nVerified correct for all factors (0.001, 0.01, 0.001, etc).\n\n### Bug 3: Duplicate sensor objects — second value overwrites first\n\nWhen a payload contains two objects with the same ID (e.g., two `0x45` temperature readings), both write to the same result key, so the first is lost.\n\nExample: `40450101450301` → both decode to `temperature_C` → only second (25.9°C) survives.\n\nBleparser produces `temperature_1: 25.7, temperature_2: 25.9`.\n\n**Fix**: Collect 
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:30:09</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/.claude/plans/the-current-qingping-js-decoder-snappy-feather.md has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:30:11</sup>
+
+<details>
+<summary>Tool: <code>ToolSearch</code></summary>
+
+```json
+{
+  "query": "select:ExitPlanMode",
+  "max_results": 1
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:30:11</sup>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:30:17</sup>
+
+4 bugs found in `devices/bthome.js`:
+
+1. **Min-length check too strict** — `data.length < 4` rejects valid 3-byte payloads (single binary sensor, 1-byte humidity, etc.), causing 10+ bleparser test cases to return null
+2. **Float precision** — raw multiplication without rounding: `2506 * 0.01 = 25.060000000000002` instead of 25.06
+3. **Duplicate sensor objects** — second value overwrites first; two temperature readings collapse to one
+4. **Multiple buttons** — only last non-zero event kept; bleparser emits all as `button_1`/`button_2`/etc including zero events
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:30:18</sup>
+
+<details>
+<summary>Tool: <code>ExitPlanMode</code></summary>
+
+```json
+{
+  "allowedPrompts": [
+    {
+      "tool": "Bash",
+      "prompt": "run npm test"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "run npm run decode:update"
+    }
+  ],
+  "plan": "# Plan: Fix bthome.js — bugs found by bleparser cross-check\n\n## Context\n\nCross-checked `devices/bthome.js` against `bleparser/package/bleparser/bthome.py` + `bthome_const.py`.\nRan all 27 bleparser V2 test payloads through the JS decoder. Found 4 bugs.\n\n---\n\n## Bugs\n\n### Bug 1: Minimum-length check rejects valid 3-byte payloads\n\nLine 13: `data.length < 4` — rejects any payload shorter than 4 bytes.\n\nValid single-sensor payloads are 3 bytes (1 header + 1 object ID + 1 value byte). Example: `400f01` (generic boolean) → returns null instead of decoding.\n\nAffected bleparser test cases: binary, switch, opening, door, light, lock, motion, smoke, humidity_1byte, moisture_1byte.\n\n**Fix**: Change `data.length < 4` to `data.length < 2`.\n\n### Bug 2: Floating-point precision — raw multiplication without rounding\n\nLines 42-44:\n```js\nlet value = def.signed ? data.readIntLE(1, def.size) : data.readUIntLE(1, def.size);\nif (def.factor) value *= def.factor;\n```\n\nJS float multiplication introduces error: `2506 * 0.01 = 25.060000000000002`, `5055 * 0.01 = 50.550000000000004`. Bleparser uses `round()` with the correct decimal places.\n\n**Fix**: When `def.factor` is set, round to `Math.round(-Math.log10(def.factor))` decimal places:\n```js\nif (def.factor) {\n  const places = Math.round(-Math.log10(def.factor));\n  value = Math.round(value * def.factor * 10 ** places) / 10 ** places;\n}\n```\n\nVerified correct for all factors (0.001, 0.01, 0.001, etc).\n\n### Bug 3: Duplicate sensor objects — second value overwrites first\n\nWhen a payload contains two objects with the same ID (e.g., two `0x45` temperature readings), both write to the same result key, so the first is lost.\n\nExample: `40450101450301` → both decode to `temperature_C` → only second (25.9°C) survives.\n\nBleparse
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:30:28</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+User has approved your plan. You can now start coding. Start with updating your todo list if applicable
+
+Your plan has been saved to: /Users/mah/.claude/plans/the-current-qingping-js-decoder-snappy-feather.md
+You can refer back to it if needed during implementation.
+
+## Approved Plan (edited by user):
+# Plan: Fix bthome.js — bugs found by bleparser cross-check
+
+## Context
+
+Cross-checked `devices/bthome.js` against `bleparser/package/bleparser/bthome.py` + `bthome_const.py`.
+Ran all 27 bleparser V2 test payloads through the JS decoder. Found 4 bugs.
+
+---
+
+## Bugs
+
+### Bug 1: Minimum-length check rejects valid 3-byte payloads
+
+Line 13: `data.length < 4` — rejects any payload shorter than 4 bytes.
+
+Valid single-sensor payloads are 3 bytes (1 header + 1 object ID + 1 value byte). Example: `400f01` (generic boolean) → returns null instead of decoding.
+
+Affected bleparser test cases: binary, switch, opening, door, light, lock, motion, smoke, humidity_1byte, moisture_1byte.
+
+**Fix**: Change `
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:30:31</sup>
+
+Implementing now. I'll restructure the decode loop to collect items, then apply duplicate postfixes, and fix all four bugs:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:30:32</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js",
+  "limit": 130
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:30:32</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	/**
+2	 * Decodes BTHome servicedata.
+3	 * @param {Buffer} serviceData - The data buffer to decode.
+4	 * @returns {SensorValues} A key-value map of decoded sensor values.
+5	 *
+6	 * based mostly on code copyright (c) 2017-2025 AlCalzone
+7	 * https://github.com/AlCalzone/ioBroker.ble.git
+8	 * MIT license
+9	 */
+10	function decodeBTHome(_manufacturerData, serviceData) {
+11	  let data = serviceData["fcd2"];
+12	  if (
+13	    data.length < 4 || // too short
+14	    data[0] & 0x01 || // encrypted data not supported
+15	    (data[0] & 0xe0) >> 5 != 2 // not BTHome v2
+16	  ) {
+17	    return null;
+18	  }
+19	  const result = {};
+20	  const mac_included = (data[0] & 0x02) != 0;
+21	  if (mac_included) {
+22	    result.macAddress = data
+23	      .slice(1, 7)
+24	      .reverse()
+25	      .toString("hex")
+26	      .match(/.{1,2}/g)
+27	      ?.join(":");
+28	    data = data.slice(7);
+29	  } else {
+30	    data = data.slice(1);
+31	  }
+32	  while (data.length > 0) {
+33	    const objectId = data[0];
+34	    if 
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:30:34</sup>
+
+Now I'll apply all four fixes:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:30:51</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js",
+  "old_string": "function decodeBTHome(_manufacturerData, serviceData) {\n  let data = serviceData[\"fcd2\"];\n  if (\n    data.length < 4 || // too short\n    data[0] & 0x01 || // encrypted data not supported\n    (data[0] & 0xe0) >> 5 != 2 // not BTHome v2\n  ) {\n    return null;\n  }\n  const result = {};\n  const mac_included = (data[0] & 0x02) != 0;\n  if (mac_included) {\n    result.macAddress = data\n      .slice(1, 7)\n      .reverse()\n      .toString(\"hex\")\n      .match(/.{1,2}/g)\n      ?.join(\":\");\n    data = data.slice(7);\n  } else {\n    data = data.slice(1);\n  }\n  while (data.length > 0) {\n    const objectId = data[0];\n    if (objectId === 0x00) {\n      result.packetId = data[1];\n      data = data.slice(2);\n    } else if (multilevelSensorDefinitions.has(objectId)) {\n      const def = multilevelSensorDefinitions.get(objectId);\n      let value = def.signed\n        ? data.readIntLE(1, def.size)\n        : data.readUIntLE(1, def.size);\n      if (def.factor) {\n        value *= def.factor;\n      }\n      let key = def.label;\n      if (def.unit) {\n        key += `_${def.unit}`;\n      }\n      result[key] = value;\n      data = data.slice(1 + def.size);\n    } else if (binarySensorDefinitions.has(objectId)) {\n      const def = binarySensorDefinitions.get(objectId);\n      result[def.label] = data[1] === 0x01;\n      data = data.slice(2);\n    } else if (objectId === 0x3a) {\n      // button event\n      const eventId = data[1];\n      if (eventId !== 0x00) {\n        const buttonEvents = {\n          0x01: \"press\",\n          0x02: \"double_press\",\n          0x03: \"triple_press\",\n          0x04: \"long_press\",\n          0x05: \"long_double_press\",\n          0x06: \"long_triple_press\",\n          0x80: \"hold_press\",\n        };\n        result.button = buttonEvents[eventId];\n      }\n      data = data.slice(2);\n   
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:30:52</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:30:54</sup>
+
+Now fix the end of the decode loop — add the duplicate-postfix assignment and button renaming:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:30:59</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js",
+  "old_string": "    } else {\n      console.log(`Unsupported BTHome object ID ${objectId.toString(16)}`);\n      return {};\n    }\n  }\n  return result;\n}",
+  "new_string": "    } else {\n      console.log(`Unsupported BTHome object ID ${objectId.toString(16)}`);\n      return {};\n    }\n  }\n\n  // Apply duplicate-postfix for sensor items with repeated keys\n  const keyCounts = {};\n  for (const { key } of items) keyCounts[key] = (keyCounts[key] || 0) + 1;\n  const keyIdx = {};\n  for (const { key, value } of items) {\n    if (keyCounts[key] > 1) {\n      keyIdx[key] = (keyIdx[key] || 0) + 1;\n      result[`${key}_${keyIdx[key]}`] = value;\n    } else {\n      result[key] = value;\n    }\n  }\n\n  // Collapse single button_1 back to button for backward compatibility\n  if (buttonCount === 1 && result.button_1 !== undefined) {\n    if (result.button_1 !== null) result.button = result.button_1;\n    delete result.button_1;\n  }\n\n  return result;\n}"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:31:00</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:31:04</sup>
+
+Now update the existing test cases that will be affected by the float-precision fix, and add the new test cases. First, check which existing tests have floats that will change:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:31:11</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\nimport('./devices/bthome.js').then(({decoder}) => {\n  const fn = decoder.advertisementDecode;\n  // run all existing tests from the file - just the ones that might have float changes\n  const cases = [\n    ['test2', '40000902ac0d03a00f04f28f0105d91300100112b804'],\n    ['test4', '40004a03a00f04f28f015312424c41424c4164646164617364617358595a5403313233'],\n    ['test5', '4248ca433932a5002f03a00f04f28f015312424c41424c4164646164617364617358595a5403313233'],\n    ['test6', '4248ca433932a5002c02ac0d03a00f04f28f0105d91300100112b804135e013a013c02065312424c41424c4164646164617364617358595a5403313233'],\n    ['speed_accel', '40624099dfff630057d0ff'],\n  ];\n  for (const [name, hex] of cases) {\n    const sd = {fcd2: Buffer.from(hex, 'hex')};\n    console.log(name, JSON.stringify(fn(null, sd)));\n  }\n});\n\"\n",
+  "description": "Check existing tests with fixed decoder"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:31:14</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+test2 {"packetId":9,"temperature_C":35,"humidity_percent":40,"pressure_hPa":1023.86,"illuminance_lux":50.81,"power":true,"co2_ppm":1208}
+test4 {"packetId":74,"text":"BLABLAddadasdasXYZ","raw":"313233","humidity_percent":40,"pressure_hPa":1023.86}
+test5 {"macAddress":"a5:32:39:43:ca:48","packetId":47,"text":"BLABLAddadasdasXYZ","raw":"313233","humidity_percent":40,"pressure_hPa":1023.86}
+test6 {"macAddress":"a5:32:39:43:ca:48","packetId":44,"dimmerRotateRight":6,"text":"BLABLAddadasdasXYZ","raw":"313233","temperature_C":35,"humidity_percent":40,"pressure_hPa":1023.86,"illuminance_lux":50.81,"power":true,"co2_ppm":1208,"tvoc_ug/m3":350,"button":"press"}
+speed_accel {"speed_m/s":-2.123456,"acceleration_m/s²":-3.123456}
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:31:24</sup>
+
+Existing tests are unchanged. Now check the existing button test case (test1):
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:31:32</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\nimport('./devices/bthome.js').then(({decoder}) => {\n  const fn = decoder.advertisementDecode;\n  // test1: single button press + dimmer + text + raw\n  const sd1 = {fcd2: Buffer.from('403a013c020653034142435403313233', 'hex')};\n  console.log('test1:', JSON.stringify(fn(null, sd1)));\n  // Shelly idle\n  const sd3 = {fcd2: Buffer.from('4400ca01643a00', 'hex')};\n  console.log('shelly:', JSON.stringify(fn(null, sd3)));\n  // test7 device types\n  const sd7 = {fcd2: Buffer.from('44f00100f100010204f2000106', 'hex')};\n  console.log('devtype:', JSON.stringify(fn(null, sd7)));\n  // window sensor\n  const sdw = {fcd2: Buffer.from('4400f00164055802002d003f0000', 'hex')};\n  console.log('window:', JSON.stringify(fn(null, sdw)));\n  // truncated text\n  const sdt1 = {fcd2: Buffer.from('40000553', 'hex')};\n  console.log('trunc_text:', JSON.stringify(fn(null, sdt1)));\n  // truncated raw\n  const sdt2 = {fcd2: Buffer.from('40000554', 'hex')};\n  console.log('trunc_raw:', JSON.stringify(fn(null, sdt2)));\n  // settings_revision test\n  const sds = {fcd2: Buffer.from('403a013c0206530341424354033132336503', 'hex')};\n  console.log('settings:', JSON.stringify(fn(null, sds)));\n});\n\"\n",
+  "description": "Check all existing test cases with fixed decoder"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:31:34</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+test1: {"dimmerRotateRight":6,"text":"ABC","raw":"313233","button":"press"}
+shelly: {"packetId":202,"battery_percent":100}
+devtype: {"devicetype":1,"fwversion4":"4.2.1.0","fwversion3":"6.1.0"}
+window: {"packetId":240,"battery_percent":100,"illuminance_lux":6,"window":false,"rotation_°":0}
+trunc_text: {"packetId":5}
+trunc_raw: {"packetId":5}
+settings: {"dimmerRotateRight":6,"text":"ABC","raw":"313233","settings_revision":3,"button":"press"}
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:31:40</sup>
+
+All existing tests still match. Note the Shelly test has a button event=0 (`3a00`) — the decoder now emits nothing for that single zero-button (button_1=null, then button_1 gets deleted since it's null, and single-button logic only collapses non-null). Let me verify the Shelly case: `4400ca01643a00`:
+- 0x00 = packetId=0xca=202
+- 0x01 = battery=0x64=100
+- 0x3a = button event=0x00 → button_1=null → single button, null → deleted
+
+Result: `{packetId:202, battery_percent:100}` ✓ — matches existing test.
+
+Now add the new test cases:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:31:44</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\nimport('./devices/bthome.js').then(({decoder}) => {\n  const fn = decoder.advertisementDecode;\n  const cases = [\n    ['generic_boolean', '400f01'],\n    ['door', '401a01'],\n    ['motion', '402101'],\n    ['humidity_1byte', '402e33'],\n    ['double_temp', '40450101450301'],\n    ['quad_button', '4400c201643a003a033a013a00'],\n  ];\n  for (const [name, hex] of cases) {\n    const sd = {fcd2: Buffer.from(hex, 'hex')};\n    console.log(name, JSON.stringify(fn(null, sd)));\n  }\n});\n\"\n",
+  "description": "Verify new test case outputs"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:31:51</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+generic_boolean {"generic boolean":true}
+door {"door":true}
+motion {"motion":true}
+humidity_1byte {"humidity_percent":51}
+double_temp {"temperature_C_1":25.7,"temperature_C_2":25.9}
+quad_button {"packetId":194,"button_1":null,"button_2":"triple_press","button_3":"press","button_4":null,"battery_percent":100}
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:31:52</sup>
+
+All correct. Now add the new test cases to the file:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:32:00</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js",
+  "old_string": "  {\n    given: {\n      serviceData: { fcd2: \"403a013c0206530341424354033132336503\" },\n    },\n    expected: {\n      button: \"press\",\n      dimmerRotateRight: 6,\n      text: \"ABC\",\n      raw: \"313233\",\n      settings_revision: 3\n    },\n  },\n];",
+  "new_string": "  {\n    given: {\n      serviceData: { fcd2: \"403a013c0206530341424354033132336503\" },\n    },\n    expected: {\n      button: \"press\",\n      dimmerRotateRight: 6,\n      text: \"ABC\",\n      raw: \"313233\",\n      settings_revision: 3\n    },\n  },\n  {\n    // bleparser: generic boolean binary sensor (3-byte payload — min-length fix)\n    given: { serviceData: { fcd2: \"400f01\" } },\n    expected: { \"generic boolean\": true },\n  },\n  {\n    // bleparser: door open binary sensor\n    given: { serviceData: { fcd2: \"401a01\" } },\n    expected: { door: true },\n  },\n  {\n    // bleparser: motion detected binary sensor\n    given: { serviceData: { fcd2: \"402101\" } },\n    expected: { motion: true },\n  },\n  {\n    // bleparser: 1-byte humidity\n    given: { serviceData: { fcd2: \"402e33\" } },\n    expected: { humidity_percent: 51 },\n  },\n  {\n    // bleparser: two temperature objects — duplicate-postfix handling\n    given: { serviceData: { fcd2: \"40450101450301\" } },\n    expected: { temperature_C_1: 25.7, temperature_C_2: 25.9 },\n  },\n  {\n    // bleparser: four button objects — multi-button postfix, zero events = null\n    given: { serviceData: { fcd2: \"4400c201643a003a033a013a00\" } },\n    expected: {\n      packetId: 194,\n      battery_percent: 100,\n      button_1: null,\n      button_2: \"triple_press\",\n      button_3: \"press\",\n      button_4: null,\n    },\n  },\n];"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:32:01</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:32:03</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "npm test 2>&1",
+  "description": "Run unit tests"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:32:04</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+> sensor-ble@0.0.1 test
+> node harness/test.js
+
+Test passed airpods
+Test passed airpods
+Test failed
+Given: undefined
+Decoded: { dimmerRotateRight: 6, text: 'ABC', raw: '313233', button: 'press' }
+Expected: { button: 'press', dimmerRotateRight: 6, text: 'ABC', raw: '313233' }
+Test passed bthome
+Test passed bthome
+Test failed
+Given: undefined
+Decoded: {
+  packetId: 74,
+  text: 'BLABLAddadasdasXYZ',
+  raw: '313233',
+  humidity_percent: 40,
+  pressure_hPa: 1023.86
+}
+Expected: {
+  packetId: 74,
+  humidity_percent: 40,
+  pressure_hPa: 1023.86,
+  text: 'BLABLAddadasdasXYZ',
+  raw: '313233'
+}
+Test failed
+Given: undefined
+Decoded: {
+  macAddress: 'a5:32:39:43:ca:48',
+  packetId: 47,
+  text: 'BLABLAddadasdasXYZ',
+  raw: '313233',
+  humidity_percent: 40,
+  pressure_hPa: 1023.86
+}
+Expected: {
+  macAddress: 'a5:32:39:43:ca:48',
+  packetId: 47,
+  humidity_percent: 40,
+  pressure_hPa: 1023.86,
+  text: 'BLABLAddadasdasXYZ',
+  raw: '313233'
+}
+Test failed
+Given: undefined
+Decoded: {
+  macAddress: 'a5:32
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:32:07</sup>
+
+The failures are key-ordering mismatches — the test harness does strict key-order equality checks. The decoded values are correct but the key insertion order changed because `items` are flushed at the end (after `result` already has `packetId`, `macAddress`, etc.). Let me check how the test harness compares:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:32:09</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n \"pass\\|fail\\|deepEqual\\|JSON\\|stringify\\|Object.keys\\|result\\[\" /Users/mah/Ballon/src/BalloonWare/sensor-ble/harness/test.js | head -40",
+  "description": "Check test harness comparison logic"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:32:09</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+71:  const passed = JSON.stringify(decoded) === JSON.stringify(test.expected);
+72:  if (passed) {
+73:    console.log("Test passed", decoder.decoderName);
+75:    console.error("Test failed");
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:32:19</sup>
+
+It uses `JSON.stringify` comparison — so key order matters. The tests that fail have different key ordering in `expected` vs decoded. The decoded object now puts `dimmerRotateRight`, `text`, `raw` (from `items`) after `result` pre-assigned fields like `packetId`.
+
+The fix is to update the expected objects in the test cases to match the actual key order. The behavior is correct — just need to reorder the expected objects:
+
+- test1 (`403a013c...`): decoded = `{dimmerRotateRight, text, raw, button}` — button goes through single-button collapse after items flush
+- test4: decoded = `{packetId, text, raw, humidity_percent, pressure_hPa}` — text/raw assigned directly in loop (not items), then items (humidity, pressure) flushed after
+- test5: same pattern with macAddress
+- test6: similar
+- test12 (settings): same as test1 ordering issue
+- quad_button: `{packetId, button_1..4, battery_percent}` — battery goes through items
+
+I need to reorder the expected objects to match actual output order. The actual order is now:
+1. `result` direct assignments (macAddress, packetId, dimmerX, text, raw, devicetype, fwversion, buttons)
+2. Then `items` flush (multilevel + binary sensors)
+3. Then single-button collapse (`button`)
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:32:25</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js",
+  "old_string": "  {\n    // servicedata decode test. Given the servicedata data, it should decode to the expected values.\n    given: {\n      // DIY sensor https://github.com/mhaberler/BTHomeV2-ESP32-example.git#9f34e42b9c3b039718b67da57ea02e7fa0d11417\n      serviceData: { fcd2: \"403a013c020653034142435403313233\" },\n    },\n    expected: {\n      button: \"press\",\n      dimmerRotateRight: 6,\n      text: \"ABC\",\n      raw: \"313233\",\n    },\n  },",
+  "new_string": "  {\n    // servicedata decode test. Given the servicedata data, it should decode to the expected values.\n    given: {\n      // DIY sensor https://github.com/mhaberler/BTHomeV2-ESP32-example.git#9f34e42b9c3b039718b67da57ea02e7fa0d11417\n      serviceData: { fcd2: \"403a013c020653034142435403313233\" },\n    },\n    expected: {\n      dimmerRotateRight: 6,\n      text: \"ABC\",\n      raw: \"313233\",\n      button: \"press\",\n    },\n  },"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:32:26</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:32:43</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js",
+  "old_string": "  {\n    given: {\n      //  DIY sensor extended advertising with pid\n      serviceData: {\n        fcd2: \"40004a03a00f04f28f015312424c41424c4164646164617364617358595a5403313233\",\n      },\n    },\n    expected: {\n      packetId: 74,\n      humidity_percent: 40,\n      pressure_hPa: 1023.86,\n      text: \"BLABLAddadasdasXYZ\",\n      raw: \"313233\",\n    },\n  },\n  {\n    given: {\n      //  DIY sensor extended advertising with pid and mac\n      serviceData: {\n        fcd2: \"4248ca433932a5002f03a00f04f28f015312424c41424c4164646164617364617358595a5403313233\",\n      },\n    },\n    expected: {\n      macAddress: \"a5:32:39:43:ca:48\",\n      packetId: 47,\n      humidity_percent: 40,\n      pressure_hPa: 1023.86,\n      text: \"BLABLAddadasdasXYZ\",\n      raw: \"313233\",\n    },\n  },\n  {\n    given: {\n      //  DIY sensor extended advertising with pid and mac, lots of fields\n      serviceData: {\n        fcd2: \"4248ca433932a5002c02ac0d03a00f04f28f0105d91300100112b804135e013a013c02065312424c41424c4164646164617364617358595a5403313233\",\n      },\n    },\n    expected: {\n      macAddress: \"a5:32:39:43:ca:48\",\n      packetId: 44,\n      temperature_C: 35,\n      humidity_percent: 40,\n      pressure_hPa: 1023.86,\n      illuminance_lux: 50.81,\n      power: true,\n      co2_ppm: 1208,\n      \"tvoc_ug/m3\": 350,\n      button: \"press\",\n      dimmerRotateRight: 6,\n      text: \"BLABLAddadasdasXYZ\",\n      raw: \"313233\",\n    },\n  },",
+  "new_string": "  {\n    given: {\n      //  DIY sensor extended advertising with pid\n      serviceData: {\n        fcd2: \"40004a03a00f04f28f015312424c41424c4164646164617364617358595a5403313233\",\n      },\n    },\n    expected: {\n      packetId: 74,\n      text: \"BLABLAddadasdasXYZ\",\n      raw: \"313233\",\n      humidity_percent: 40,\n      pressure_hPa: 1023.86,\n    },\n  },\n
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:32:44</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:32:49</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js",
+  "old_string": "  {\n    given: {\n      serviceData: { fcd2: \"403a013c0206530341424354033132336503\" },\n    },\n    expected: {\n      button: \"press\",\n      dimmerRotateRight: 6,\n      text: \"ABC\",\n      raw: \"313233\",\n      settings_revision: 3\n    },\n  },",
+  "new_string": "  {\n    given: {\n      serviceData: { fcd2: \"403a013c0206530341424354033132336503\" },\n    },\n    expected: {\n      dimmerRotateRight: 6,\n      text: \"ABC\",\n      raw: \"313233\",\n      settings_revision: 3,\n      button: \"press\",\n    },\n  },"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:32:50</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:32:52</sup>
+
+Now fix the quad_button test expected key order:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:32:56</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js",
+  "old_string": "  {\n    // bleparser: four button objects — multi-button postfix, zero events = null\n    given: { serviceData: { fcd2: \"4400c201643a003a033a013a00\" } },\n    expected: {\n      packetId: 194,\n      battery_percent: 100,\n      button_1: null,\n      button_2: \"triple_press\",\n      button_3: \"press\",\n      button_4: null,\n    },\n  },",
+  "new_string": "  {\n    // bleparser: four button objects — multi-button postfix, zero events = null\n    given: { serviceData: { fcd2: \"4400c201643a003a033a013a00\" } },\n    expected: {\n      packetId: 194,\n      button_1: null,\n      button_2: \"triple_press\",\n      button_3: \"press\",\n      button_4: null,\n      battery_percent: 100,\n    },\n  },"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:32:57</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/bthome.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:32:59</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "npm test 2>&1",
+  "description": "Run unit tests"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:33:00</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+> sensor-ble@0.0.1 test
+> node harness/test.js
+
+Test passed airpods
+Test passed airpods
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mopeka
+Test passed mopeka
+Test passed musev3
+Test passed musev3
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed ruuvi
+Test passed ruuvi
+All te
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:33:01</sup>
+
+All 18 bthome tests pass. Update snapshots:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:33:02</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "npm run decode:update 2>&1",
+  "description": "Regenerate regression snapshots"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:33:02</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+> sensor-ble@0.0.1 decode:update
+> node harness/regression.js --update
+
+Updated snapshot: 2026-03-28_17-22-29.json (361 results)
+Updated snapshot: 2026-05-08_20-21-43.json (42 results)
+Updated snapshot: 2026-05-08_20-36-52.json (22 results)
+Updated snapshot: otodata.json (4 results)
+Updated snapshot: quingping.json (9 results)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:33:09</sup>
+
+All done. Four bugs fixed in [devices/bthome.js](devices/bthome.js):
+
+1. **Min-length**: `< 4` → `< 2` — single-sensor 3-byte payloads now decode correctly
+2. **Float precision**: multiplication now rounded to correct decimal places (e.g. `25.06` not `25.060000000000002`)
+3. **Duplicate sensors**: collect-then-postfix approach — two temperature readings now produce `temperature_C_1` and `temperature_C_2`
+4. **Multiple buttons**: all button events emitted as `button_1`/`button_2`/etc; zero-events = null; single button collapses back to `button` for backward compatibility
+
+6 new test cases added covering the previously broken paths.
 
 
 ---
