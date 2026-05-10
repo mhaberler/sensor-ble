@@ -52,10 +52,20 @@ Set `variableFormat: true` when returned keys vary per device (e.g. BTHome). Con
 
 `sensorlogs/` holds captured BLE log files (`.json`) and their snapshots (`.snap.json`). Regression test diffs decoded output against snapshot. To add a new log: place `.json` in `sensorlogs/`, run `npm run decode:update` to generate the `.snap.json`, commit both.
 
-## Adding a New Device (Theengs)
+## Adding a New Device
 
-Use the `/theengs_decoder` skill to port a Theengs `.h` descriptor to a `devices/<name>.js` module.
+Two skills available — use whichever source is richer; cross-check with the other:
 
-Source files live in `theengs_decoder/src/devices/` (checked out under `theengs_decoder/`). Test data in `theengs_decoder/tests/BLE/test_ble.cpp`.
+**`/theengs_decoder`** — Port a Theengs `.h` descriptor to `devices/<name>.js`.
+Source files: `decoder/src/devices/`. Test data: `decoder/tests/BLE/test_ble.cpp`.
 
-Skill handles: offset translation, column naming, null sentinels, test derivation, `main.js` registration, and regression snapshot generation. Invoke with the `.h` file path or device name.
+**`/bleparser`** (see `BLEPARSER.md`) — Port a bleparser Python decoder to `devices/<name>.js`.
+Source files: `bleparser/package/bleparser/`. Test data: `bleparser/package/tests/`.
+
+Both skills handle: offset translation, column naming, null sentinels, test derivation, `main.js` registration, and regression snapshot generation.
+
+Cross-checking between the two implementations catches bugs (sign errors, masking, sentinel handling). When bleparser lacks a device variant, check Theengs as supplement and vice versa.
+
+## Harness Routing
+
+`harness/registry.js` exports `matchingDecoders(advertisement, allDecoders)` — returns all decoders whose `manufacturer`, `serviceUUID`, or `name` matches the advertisement. Multiple decoders can share the same routing key (e.g. different products with the same company ID); `harness/main.js` tries all candidates and uses the first non-null decode result.

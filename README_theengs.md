@@ -14,27 +14,16 @@ Test cases which match the device are extracted from [test_ble.cpp](https://gith
 
 Matching advertisements from sensorlogs/*.json are added as test vectors too (last two test cases).
 
-
-
 # Converting sensors supported in Ernst79/bleparser
 
-The BLEPARSER.md skill does a reasonable job of converting decoders from Python to sensor-ble.
+The BLEPARSER.md skill does a reasonable job of converting decoders from Python under https://github.com/Ernst79/bleparser/tree/master/package/bleparser to sensor-ble.
+
+I just cloned  this repo into sensor-ble and gitignore it
 
 The Mikrotik and Qingping decoders were created with this skill.
-
-
 
 ## Cross-checking implementations
 
 I found telling Claude to cross-check implementations between these sources be very effective
 
 The Mikrotik decoder was improved significantly this way. Also, missing parts can be filled in; the bleparser/qingping.py decoder is great but lacked the CGH1 window sensor - I had that filled in by suggesting to peek at the theengs implementation.
-
-
-
-
-
-
-
-
-
