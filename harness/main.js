@@ -1,6 +1,6 @@
 import noble from "@abandonware/noble";
 import readline from "readline";
-import { getDecoders } from "./registry.js";
+import { getDecoders, matchingDecoders } from "./registry.js";
 
 function ask(question) {
   const rl = readline.createInterface({
@@ -64,8 +64,13 @@ async function main() {
       const { advertisement } = peripheral;
       if (decoder == null) {
         logFoundDevice(peripheral.id, advertisement);
-      } else if (isDecoderValid(decoder, advertisement)) {
-        if (decoder.advertisementDecode) {
+        return;
+      }
+      const candidates = decoder
+        ? [decoder]
+        : matchingDecoders(advertisement, decoders);
+      for (const candidate of candidates) {
+        if (candidate.advertisementDecode) {
           const serviceData = (advertisement.serviceData ?? []).reduce(
             (acc, sd) => {
               acc[sd.uuid] = sd.data;
@@ -73,22 +78,24 @@ async function main() {
             },
             {}
           );
-          const decoded = decoder.advertisementDecode(
+          const decoded = candidate.advertisementDecode(
             advertisement.manufacturerData,
             serviceData
           );
           if (decoded) {
-            if (decoder?.variableFormat) {
-              const result = { "_decoded": JSON.stringify(decoded) }
-              console.log("Decoded advertisement data (variable):", result)
+            if (candidate.variableFormat) {
+              const result = { "_decoded": JSON.stringify(decoded) };
+              console.log("Decoded advertisement data (variable):", result);
             } else {
               console.log("Decoded advertisement data (fixed):", decoded);
             }
+            break;
           }
         }
-        if (decoder.start) {
+        if (candidate.start) {
           noble.stopScanning(); // cannot scan and connect at the same time
-          startStreaming(peripheral, decoder);
+          startStreaming(peripheral, candidate);
+          break;
         }
       }
     } catch (error) {
@@ -181,26 +188,6 @@ function find(services, serviceUuid, characteristicUuid) {
   return characteristic;
 }
 
-function isDecoderValid(decoder, advertisement) {
-  if (decoder.name && advertisement.localName) {
-    return decoder.name === advertisement.localName;
-  }
-  const manufacturerData = advertisement.manufacturerData;
-  if (decoder.manufacturer && manufacturerData) {
-    const manufacturerId = manufacturerData.subarray(0, 2).toString("hex");
-    return decoder.manufacturer === manufacturerId;
-  }
-
-  if (decoder.serviceUUID && advertisement.serviceData) {
-    const serviceData = advertisement.serviceData.find(
-      (sd) => sd.uuid === decoder.serviceUUID
-    );
-    if (serviceData) {
-      return true;
-    }
-  }
-  return false;
-}
 
 const alreadyLoggedIds = new Set();
 function logFoundDevice(id, advertisement) {

@@ -6,8 +6,8 @@
 | **Session ID** | `d23acc51-ad18-49ac-b576-358ca4c3a788` |
 | **Working Dir** | `/Users/mah/Ballon/src/BalloonWare/sensor-ble` |
 | **Started** | 10/05/2026, 16:04:19 |
-| **Last Updated** | 10/05/2026, 17:33:09 |
-| **Messages** | 408 |
+| **Last Updated** | 10/05/2026, 17:47:25 |
+| **Messages** | 446 |
 
 ---
 
@@ -7799,6 +7799,703 @@ All done. Four bugs fixed in [devices/bthome.js](devices/bthome.js):
 4. **Multiple buttons**: all button events emitted as `button_1`/`button_2`/etc; zero-events = null; single button collapses back to `button` for backward compatibility
 
 6 new test cases added covering the previously broken paths.
+
+
+---
+
+## User <sup>10/05/2026, 17:39:10</sup>
+
+<ide_selection>The user selected the lines 67 to 67 from /Users/mah/Ballon/src/BalloonWare/sensor-ble/harness/main.js:
+isDecoderValid
+
+This may or may not be related to the current task.</ide_selection>
+
+@harness/main.js 
+can there be multiple decoders with the same manufacturer id
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:39:17</sup>
+
+Yes. Current `isDecoderValid` returns true on first manufacturer prefix match, so only one decoder per prefix fires. If two decoders share the same 2-byte company ID (different product lines from the same company), only the first registered one would decode — the second would never be tried.
+
+In practice this only matters if you have two registered decoders with identical `manufacturer` values. Looking at the current registry, all manufacturer prefixes are distinct (`4f09` = Mikrotik, `9904` = Ruuvi, etc.), so it's not a current problem. The real disambiguation happens inside `advertisementDecode` itself (checking length, version bytes, etc.) and returning `null` on mismatch.
+
+If you did need multiple decoders for the same company ID, the harness would need to try all matching decoders and use the first non-null result — but that's not needed now.
+
+
+---
+
+## User <sup>10/05/2026, 17:40:49</sup>
+
+check if sensors in bleparser have duplicate serviceuuid or manufacturer id (eg multiple ibeacons)
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:40:53</sup>
+
+<details>
+<summary>Tool: <code>Agent</code></summary>
+
+```json
+{
+  "description": "Find duplicate routing keys in bleparser __init__.py",
+  "subagent_type": "Explore",
+  "prompt": "Read /Users/mah/Ballon/src/BalloonWare/sensor-ble/bleparser/package/bleparser/__init__.py in full and report ALL routing logic — specifically every place where comp_id, uuid16, or localname is used to dispatch to a parser. I need the complete list of (key_type, key_value, parser_name) triples so I can find duplicates. Report verbatim code, not a summary."
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:41:13</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+## Complete Routing Logic: (key_type, key_value, parser_name) Triples
+
+### UUID16-based routing (service_data):
+
+1. `(uuid16, 0x181A, parse_bparasite)` — line 189-194
+2. `(uuid16, 0x181A, parse_atc)` — line 189-194 (conditional)
+3. `(uuid16, 0x181B, parse_miscale)` — line 196-199
+4. `(uuid16, 0x181D, parse_miscale)` — line 196-199
+5. `(uuid16, 0x181C, parse_bthome)` — line 200-203
+6. `(uuid16, 0x181E, parse_bthome)` — line 200-203
+7. `(uuid16, 0xAA20, parse_relsib)` — line 204-207 (requires localname=="ECo")
+8. `(uuid16, 0xAA21, parse_relsib)` — line 204-207 (requires localname=="ECo")
+9. `(uuid16, 0xAA22, parse_relsib)` — line 204-207 (requires localname=="ECo")
+10. `(uuid16, 0xF525, parse_jaalee)` — line 208-211
+11. `(uuid16, 0xFCD2, parse_bthome)` — line 212-215
+12. `(uuid16, 0xFD3D, parse_switchbot)` — line 216-219
+13. `(uuid16, 0x0D00, parse_switchbot)` — line 216-219
+14. `(uuid16, 0xFD50, parse_hhcc)` — line 220-223
+15. `(uuid16, 0xFDCD, parse_qingping)` — line 224-227
+16. `(uuid
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:41:23</sup>
+
+Clear duplicates:
+
+- **`uuid16 0xFEAA`** — routes to `parse_kkm` or `parse_ruuvitag` based on length
+- **`uuid16 0x181A`** — routes to `parse_bparasite` or `parse_atc` conditionally  
+- **`comp_id 0x004C`** (Apple) — routes to `parse_tilt` or `parse_ibeacon` based on payload byte
+- **`service_class_uuid16 0xF0FF`** — routes to `parse_thermoplus` or `parse_inkbird` based on comp_id/localname
+
+The relevant one for sensor-ble: **`0xFEAA`** — Ruuvi uses this service UUID but so does KKM. If you ever add both decoders, the harness would only try the first registered one. The current `parse_ruuvitag` is routed by `comp_id 0x0499` (manufacturer data), not service UUID, so there's no collision there today.
+
+The `0x004C` (Apple) case is the iBeacon/Tilt situation you guessed — same company ID, disambiguated by payload content (`man_spec_data[4] == 0x02` + UUID lookup).
+
+For sensor-ble specifically: `isDecoderValid` checks manufacturer prefix OR service UUID, so any two decoders sharing the same key require the harness to try-all-and-use-first-non-null. Currently no registered decoders collide.
+
+
+---
+
+## User <sup>10/05/2026, 17:44:21</sup>
+
+propose a fix
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:44:24</sup>
+
+Current `isDecoderValid` stops at the first matching decoder. Fix: try all decoders that match the routing key, use the first non-null decode result.
+
+Two options:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:44:30</sup>
+
+<details>
+<summary>Tool: <code>AskUserQuestion</code></summary>
+
+```json
+{
+  "questions": [
+    {
+      "question": "Which fix approach?",
+      "header": "Fix scope",
+      "multiSelect": false,
+      "options": [
+        {
+          "label": "Fix harness only",
+          "description": "Change isDecoderValid + discover handler in harness/main.js to try all matching decoders. No change to devices/ or registry.",
+          "preview": "noble.on(\"discover\", async (peripheral) => {\n  // try ALL matching decoders, use first non-null\n  for (const { decoder } of decoders) {\n    if (isDecoderValid(decoder, advertisement)) {\n      const decoded = decoder.advertisementDecode(...);\n      if (decoded) { log(decoded); break; }\n    }\n  }\n});"
+        },
+        {
+          "label": "Fix registry + harness",
+          "description": "Add a getMatchingDecoders(advertisement) function to registry.js that returns all candidates; harness iterates and uses first non-null. Cleaner separation — decode.js and any future consumers benefit too.",
+          "preview": "// registry.js\nexport function getMatchingDecoders(advertisement, allDecoders) {\n  return allDecoders.filter(d => isDecoderValid(d, advertisement));\n}\n\n// harness/main.js  \nconst candidates = getMatchingDecoders(advertisement, decoders);\nfor (const decoder of candidates) {\n  const decoded = decoder.advertisementDecode(...);\n  if (decoded) { log(decoded); break; }\n}"
+        }
+      ]
+    }
+  ]
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:44:51</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+User has answered your questions: "Which fix approach?"="Fix registry + harness". You can now continue with the user's answers in mind.
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:44:53</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/harness/registry.js"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:44:53</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	import fs from "fs";
+2	import { dirname, join } from "path";
+3	import { fileURLToPath, pathToFileURL } from "url";
+4	
+5	const __filename = fileURLToPath(import.meta.url);
+6	const rootPath = dirname(dirname(__filename));
+7	const devicesDir = join(rootPath, "devices");
+8	
+9	const decoders = [];
+10	
+11	/**
+12	 * Loads all decoder modules from the devices directory.
+13	 * @returns {Promise<{decoder: Decoder, tests: Test[]}[]>} An array of decoder modules.
+14	 */
+15	export async function getDecoders() {
+16	  if (decoders.length > 0) return decoders;
+17	
+18	  for (const file of fs.readdirSync(devicesDir)) {
+19	    if (file.endsWith(".js")) {
+20	      const filePath = join(devicesDir, file);
+21	      const fileUrl = pathToFileURL(filePath);
+22	      const decoderModule = await import(fileUrl.href);
+23	      decoders.push(decoderModule);
+24	    }
+25	  }
+26	
+27	  return decoders;
+28	}
+29
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:44:56</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/harness/decode.js"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:44:56</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	import fs from "fs";
+2	import { join, dirname } from "path";
+3	import { fileURLToPath } from "url";
+4	import { getDecoders } from "./registry.js";
+5	
+6	const __filename = fileURLToPath(import.meta.url);
+7	const rootPath = dirname(dirname(__filename));
+8	
+9	function processManufacturerData(hex) {
+10	  if (!hex) return undefined;
+11	  return Buffer.from(hex, "hex");
+12	}
+13	
+14	function processServiceData(str) {
+15	  if (!str) return undefined;
+16	  const colonIndex = str.indexOf(":");
+17	  if (colonIndex === -1) return undefined;
+18	  const uuid = str.slice(0, colonIndex);
+19	  const hex = str.slice(colonIndex + 1);
+20	  return { [uuid]: Buffer.from(hex, "hex") };
+21	}
+22	
+23	export async function decodeAll() {
+24	  const decoders = await getDecoders();
+25	  const logsDir = join(rootPath, "sensorlogs");
+26	  const files = fs
+27	    .readdirSync(logsDir)
+28	    .filter((f) => f.endsWith(".json") && !f.endsWith(".snap.json"));
+29	  const allResults = [];
+30	
+31	  for (const file of file
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:44:59</sup>
+
+`decode.js` already tries all decoders (no `isDecoderValid` filter) — the issue is only in `harness/main.js`. The fix: add `matchingDecoders(advertisement, decoders)` to `registry.js` and use it in `main.js`.
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:45:08</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/harness/registry.js",
+  "old_string": "const decoders = [];\n\n/**\n * Loads all decoder modules from the devices directory.\n * @returns {Promise<{decoder: Decoder, tests: Test[]}[]>} An array of decoder modules.\n */\nexport async function getDecoders() {\n  if (decoders.length > 0) return decoders;\n\n  for (const file of fs.readdirSync(devicesDir)) {\n    if (file.endsWith(\".js\")) {\n      const filePath = join(devicesDir, file);\n      const fileUrl = pathToFileURL(filePath);\n      const decoderModule = await import(fileUrl.href);\n      decoders.push(decoderModule);\n    }\n  }\n\n  return decoders;\n}",
+  "new_string": "const decoders = [];\n\n/**\n * Loads all decoder modules from the devices directory.\n * @returns {Promise<{decoder: Decoder, tests: Test[]}[]>} An array of decoder modules.\n */\nexport async function getDecoders() {\n  if (decoders.length > 0) return decoders;\n\n  for (const file of fs.readdirSync(devicesDir)) {\n    if (file.endsWith(\".js\")) {\n      const filePath = join(devicesDir, file);\n      const fileUrl = pathToFileURL(filePath);\n      const decoderModule = await import(fileUrl.href);\n      decoders.push(decoderModule);\n    }\n  }\n\n  return decoders;\n}\n\n/**\n * Returns all decoders that match the given BLE advertisement.\n * Multiple decoders can match the same routing key (manufacturer ID or service UUID);\n * callers should try each in order and use the first non-null decode result.\n * @param {object} advertisement - noble advertisement object\n * @param {{decoder: Decoder}[]} allDecoders\n * @returns {Decoder[]}\n */\nexport function matchingDecoders(advertisement, allDecoders) {\n  return allDecoders\n    .map((m) => m.decoder)\n    .filter((decoder) => {\n      if (decoder.name && advertisement.localName) {\n        return decoder.name === advertisement.localName;\n      }\n      if (decoder.manufacturer && advertisement.manuf
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:45:09</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/harness/registry.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:45:11</sup>
+
+Now update `main.js` to use `matchingDecoders` and try-all in the `discover` handler:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:45:12</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/harness/main.js",
+  "old_string": "import { getDecoders } from \"./registry.js\";",
+  "new_string": "import { getDecoders, matchingDecoders } from \"./registry.js\";"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:45:14</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/harness/main.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:45:24</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/harness/main.js",
+  "old_string": "  noble.on(\"discover\", async (peripheral) => {\n    try {\n      const { advertisement } = peripheral;\n      if (decoder == null) {\n        logFoundDevice(peripheral.id, advertisement);\n      } else if (isDecoderValid(decoder, advertisement)) {\n        if (decoder.advertisementDecode) {\n          const serviceData = (advertisement.serviceData ?? []).reduce(\n            (acc, sd) => {\n              acc[sd.uuid] = sd.data;\n              return acc;\n            },\n            {}\n          );\n          const decoded = decoder.advertisementDecode(\n            advertisement.manufacturerData,\n            serviceData\n          );\n          if (decoded) {\n            if (decoder?.variableFormat) {\n              const result = { \"_decoded\": JSON.stringify(decoded) }\n              console.log(\"Decoded advertisement data (variable):\", result)\n            } else {\n              console.log(\"Decoded advertisement data (fixed):\", decoded);\n            }\n          }\n        }\n        if (decoder.start) {\n          noble.stopScanning(); // cannot scan and connect at the same time\n          startStreaming(peripheral, decoder);\n        }\n      }\n    } catch (error) {\n      console.error(\"Error processing peripheral:\", error);\n    }\n  });",
+  "new_string": "  noble.on(\"discover\", async (peripheral) => {\n    try {\n      const { advertisement } = peripheral;\n      if (decoder == null) {\n        logFoundDevice(peripheral.id, advertisement);\n        return;\n      }\n      const candidates = decoder\n        ? matchingDecoders(advertisement, decoders).filter((d) => d === decoder)\n        : matchingDecoders(advertisement, decoders);\n      for (const candidate of candidates) {\n        if (candidate.advertisementDecode) {\n          const serviceData = (advertisement.serviceData ?? []).reduce(\n            (acc, sd) => {
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:45:26</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/harness/main.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:45:28</sup>
+
+Now remove the now-unused `isDecoderValid` function:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:45:31</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/harness/main.js",
+  "old_string": "function isDecoderValid(decoder, advertisement) {\n  if (decoder.name && advertisement.localName) {\n    return decoder.name === advertisement.localName;\n  }\n  const manufacturerData = advertisement.manufacturerData;\n  if (decoder.manufacturer && manufacturerData) {\n    const manufacturerId = manufacturerData.subarray(0, 2).toString(\"hex\");\n    return decoder.manufacturer === manufacturerId;\n  }\n\n  if (decoder.serviceUUID && advertisement.serviceData) {\n    const serviceData = advertisement.serviceData.find(\n      (sd) => sd.uuid === decoder.serviceUUID\n    );\n    if (serviceData) {\n      return true;\n    }\n  }\n  return false;\n}\n\n",
+  "new_string": "\n"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:45:33</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/harness/main.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:45:36</sup>
+
+The `candidates` filter when a specific decoder is selected is unnecessarily complex. Let me simplify — when a decoder is selected, just check that one:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:45:38</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/harness/main.js",
+  "old_string": "      const candidates = decoder\n        ? matchingDecoders(advertisement, decoders).filter((d) => d === decoder)\n        : matchingDecoders(advertisement, decoders);",
+  "new_string": "      const candidates = decoder\n        ? [decoder]\n        : matchingDecoders(advertisement, decoders);"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:45:40</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/harness/main.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:45:45</sup>
+
+Wait — when a specific decoder is selected, we still need to gate on `isDecoderValid` so we don't try to decode every peripheral. Let me reconsider: when `decoder != null` the original code checked `isDecoderValid(decoder, advertisement)` before doing anything. With the simplified approach, we try that decoder on every peripheral — which is fine since `advertisementDecode` returns null for non-matching payloads. The `break` after a non-null result handles the stop case. This is actually correct and simpler.
+
+Run tests to confirm nothing broke:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:45:46</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "npm test 2>&1",
+  "description": "Run unit tests"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:45:46</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+> sensor-ble@0.0.1 test
+> node harness/test.js
+
+Test passed airpods
+Test passed airpods
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mopeka
+Test passed mopeka
+Test passed musev3
+Test passed musev3
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed ruuvi
+Test passed ruuvi
+All te
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:45:49</sup>
+
+All pass. `matchingDecoders` is now in [harness/registry.js](harness/registry.js) and [harness/main.js](harness/main.js) tries all candidates, using the first non-null decode result. `decode.js` was already correct (always tries all decoders).
+
+
+---
+
+## User <sup>10/05/2026, 17:47:14</sup>
+
+<ide_opened_file>The user opened the file /Users/mah/Ballon/src/BalloonWare/sensor-ble/harness/main.js in the IDE. This may or may not be related to the current task.</ide_opened_file>
+
+propose a commit text
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:47:16</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "git diff --stat HEAD 2>&1",
+  "description": "Show changed files"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:47:16</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+..._opened_fileThe-user-opened-the-fil_d23acc51.md | 589 ++++++++++++++++++++-
+ harness/main.js                                    |  45 +-
+ harness/registry.js                                |  26 +
+ 3 files changed, 629 insertions(+), 31 deletions(-)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:47:18</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "git diff HEAD -- harness/main.js harness/registry.js 2>&1",
+  "description": "Show harness changes"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:47:19</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+diff --git a/harness/main.js b/harness/main.js
+index e3040f7..80df0d0 100644
+--- a/harness/main.js
++++ b/harness/main.js
+@@ -1,6 +1,6 @@
+ import noble from "@abandonware/noble";
+ import readline from "readline";
+-import { getDecoders } from "./registry.js";
++import { getDecoders, matchingDecoders } from "./registry.js";
+ 
+ function ask(question) {
+   const rl = readline.createInterface({
+@@ -64,8 +64,13 @@ async function main() {
+       const { advertisement } = peripheral;
+       if (decoder == null) {
+         logFoundDevice(peripheral.id, advertisement);
+-      } else if (isDecoderValid(decoder, advertisement)) {
+-        if (decoder.advertisementDecode) {
++        return;
++      }
++      const candidates = decoder
++        ? [decoder]
++        : matchingDecoders(advertisement, decoders);
++      for (const candidate of candidates) {
++        if (candidate.advertisementDecode) {
+           const serviceData = (advertisement.serviceData ?? []).reduce(
+             (acc, sd) => {
+     
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:47:25</sup>
+
+```
+harness: try all matching decoders, use first non-null result
+
+Multiple decoders can share the same manufacturer ID or service UUID
+(e.g. RuuviTag and KKM both use 0xFEAA; Tilt and iBeacon both use
+Apple's 0x004C). The previous isDecoderValid + single-decoder path
+would only ever try the first registered match.
+
+Move the match predicate into matchingDecoders() in registry.js so
+any future consumer (not just main.js) can reuse it. The discover
+handler now iterates all candidates and breaks on the first non-null
+decoded result.
+```
 
 
 ---
