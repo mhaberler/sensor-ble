@@ -6,8 +6,8 @@
 | **Session ID** | `d23acc51-ad18-49ac-b576-358ca4c3a788` |
 | **Working Dir** | `/Users/mah/Ballon/src/BalloonWare/sensor-ble` |
 | **Started** | 10/05/2026, 16:04:19 |
-| **Last Updated** | 10/05/2026, 16:26:14 |
-| **Messages** | 151 |
+| **Last Updated** | 10/05/2026, 17:01:24 |
+| **Messages** | 218 |
 
 ---
 
@@ -2929,6 +2929,1256 @@ Updated snapshot: otodata.json (4 results)
 ## Assistant <sup>10/05/2026, 16:26:14</sup>
 
 [devices/qingping.js](devices/qingping.js) done. 7 tests covering all bleparser test cases (CGP1W, CGD1, CGG1, CGPR1 ×3, CGDN1). No sensorlog captures for this device.
+
+
+---
+
+## User <sup>10/05/2026, 16:51:50</sup>
+
+<ide_opened_file>The user opened the file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/qingping.js in the IDE. This may or may not be related to the current task.</ide_opened_file>
+
+the current qingping.js decoder does not handle type 'CGH1' (type 4)
+add support for it by studying theengs_deocer CGH1 support
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:51:58</sup>
+
+<details>
+<summary>Tool: <code>Agent</code></summary>
+
+```json
+{
+  "description": "Explore CGH1 in theengs decoder and qingping.js",
+  "subagent_type": "Explore",
+  "prompt": "I need to understand how to add CGH1 (device_id 0x04) support to a Qingping BLE decoder. Please do the following searches:\n\n1. Find and read the Theengs/decoder .h file for CGH1 in `theengs_decoder/src/devices/` (search for CGH1 or CGGH1 or similar filenames).\n2. Read `/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/qingping.js` in full.\n3. Search `theengs_decoder/tests/BLE/test_ble.cpp` for CGH1 test data (grep for CGH1).\n4. Read the bleparser qingping.py at `/Users/mah/Ballon/src/BalloonWare/sensor-ble/bleparser/package/bleparser/qingping.py` — check if device_id 0x04 appears.\n\nWorking directory: /Users/mah/Ballon/src/BalloonWare/sensor-ble/\n\nReport: the full content of the Theengs .h file for CGH1, the CGH1 test data from test_ble.cpp, current qingping.js content, and whether bleparser handles device_id 0x04."
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:56:28</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+Perfect! Now I have all the information I need. Let me compile my findings into a comprehensive report.
+
+## Report: CGH1 Support for Qingping BLE Decoder
+
+### 1. Theengs CGH1 .h File (Full Content)
+
+**File:** `/Users/mah/Ballon/src/BalloonWare/decoder/src/devices/CGH1_json.h`
+
+```c
+const char* _CGH1_json = "{\"brand\":\"Qingping\",\"model\":\"Contact Sensor\",\"model_id\":\"CGH1\",\"tag\":\"0404\",\"condition\":[\"servicedata\",\"=\",34,\"index\",2,\"04\",\"|\",\"servicedata\",\"=\",28,\"index\",2,\"04\",\"&\",\"uuid\",\"index\",0,\"fdcd\"],\"properties\":{\"open\":{\"condition\":[\"servicedata\",\"=\",28],\"decoder\":[\"bit_static_value\",\"servicedata\",21,0,true,false]},\"_open\":{\"condition\":[\"servicedata\",\"=\",34],\"decoder\":[\"bit_static_value\",\"servicedata\",33,0,true,false]},\"mac\":{\"decoder\":[\"revmac_from_hex_data\",\"servicedata\",4]}}}";
+
+/*R""""(
+{
+   "brand":"Qingping",
+   "model":"Contact Sensor",
+   "model_id":"CGH1",
+   "tag":"0404",
+   "condition":["service
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:56:31</sup>
+
+The agent didn't return the actual test hex payloads. Let me read them directly.
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:56:32</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n \"CGH1\\|04 04\\|fdcd.*04\" /Users/mah/Ballon/src/BalloonWare/sensor-ble/theengs_decoder/tests/BLE/test_ble.cpp | head -20",
+  "description": "Find CGH1 test entries in test_ble.cpp"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:56:32</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+ugrep: warning: /Users/mah/Ballon/src/BalloonWare/sensor-ble/theengs_decoder/tests/BLE/test_ble.cpp: No such file or directory
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:56:35</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "find /Users/mah/Ballon/src/BalloonWare/sensor-ble/theengs_decoder -name \"test_ble.cpp\" 2>/dev/null; find /Users/mah/Ballon/src/BalloonWare/sensor-ble -name \"test_ble.cpp\" 2>/dev/null",
+  "description": "Locate test_ble.cpp"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:56:35</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+(Bash completed with no output)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:56:38</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "find /Users/mah/Ballon/src/BalloonWare/sensor-ble/theengs_decoder -name \"*.cpp\" 2>/dev/null | head -10; ls /Users/mah/Ballon/src/BalloonWare/sensor-ble/theengs_decoder/ 2>/dev/null",
+  "description": "Check theengs_decoder directory structure"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:56:38</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+SKILL.md
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:56:41</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "find /Users/mah/Ballon/src/BalloonWare -name \"CGH1*\" 2>/dev/null; find /Users/mah/Ballon/src/BalloonWare -name \"test_ble.cpp\" 2>/dev/null",
+  "description": "Find CGH1 header and test_ble.cpp anywhere"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:58:25</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+/Users/mah/Ballon/src/BalloonWare/decoder/src/devices/CGH1_json.h
+/Users/mah/Ballon/src/BalloonWare/decoder/docs/img/CGH1.png
+/Users/mah/Ballon/src/BalloonWare/decoder/docs/devices/CGH1.md
+/Users/mah/Ballon/src/BalloonWare/esp32-imu-baro-test/lib/decoder/docs/devices/CGH1.md
+/Users/mah/Ballon/src/BalloonWare/esp32-imu-baro-test/lib/decoder/src/devices/CGH1_json.h
+/Users/mah/Ballon/src/BalloonWare/esp32-imu-baro/lib/decoder/src/devices/CGH1_json.h
+/Users/mah/Ballon/src/BalloonWare/esp32-imu-baro/lib/decoder/docs/devices/CGH1.md
+/Users/mah/Ballon/src/BalloonWare/middleware/flight-display/.piolibdeps/m5stamp-s3/TheengsDecoder/docs/img/CGH1.png
+/Users/mah/Ballon/src/BalloonWare/middleware/flight-display/.piolibdeps/m5stamp-s3/TheengsDecoder/docs/devices/CGH1.md
+/Users/mah/Ballon/src/BalloonWare/middleware/flight-display/.piolibdeps/m5stamp-s3/TheengsDecoder/src/devices/CGH1_json.h
+/Users/mah/Ballon/src/BalloonWare/middleware/flight-display/.piolibdeps/devkitc/TheengsDecoder/docs/img/CGH1.p
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:58:27</sup>
+
+Good — the user clarified: use `decoder/src/devices/CGH1_json.h` and `decoder/tests/BLE/test_ble.cpp`. Reading both directly.
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:58:28</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/decoder/src/devices/CGH1_json.h"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:58:28</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	const char* _CGH1_json = "{\"brand\":\"Qingping\",\"model\":\"Contact Sensor\",\"model_id\":\"CGH1\",\"tag\":\"0404\",\"condition\":[\"servicedata\",\"=\",34,\"index\",2,\"04\",\"|\",\"servicedata\",\"=\",28,\"index\",2,\"04\",\"&\",\"uuid\",\"index\",0,\"fdcd\"],\"properties\":{\"open\":{\"condition\":[\"servicedata\",\"=\",28],\"decoder\":[\"bit_static_value\",\"servicedata\",21,0,true,false]},\"_open\":{\"condition\":[\"servicedata\",\"=\",34],\"decoder\":[\"bit_static_value\",\"servicedata\",33,0,true,false]},\"mac\":{\"decoder\":[\"revmac_from_hex_data\",\"servicedata\",4]}}}";
+2	/*R""""(
+3	{
+4	   "brand":"Qingping",
+5	   "model":"Contact Sensor",
+6	   "model_id":"CGH1",
+7	   "tag":"0404",
+8	   "condition":["servicedata", "=", 34, "index", 2, "04", "|", "servicedata", "=", 28, "index", 2, "04", "&", "uuid", "index", 0, "fdcd"],
+9	   "properties":{
+10	      "open":{
+11	         "condition":["servicedata", "=", 28],
+12	         "decoder":["bit_static_value", "servicedata", 21, 0, 
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:58:28</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n \"CGH1\" /Users/mah/Ballon/src/BalloonWare/sensor-ble/decoder/tests/BLE/test_ble.cpp | head -20",
+  "description": "Find CGH1 test entries in test_ble.cpp"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:58:29</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+485:    "{\"brand\":\"Qingping\",\"model\":\"Contact Sensor\",\"model_id\":\"CGH1\",\"type\":\"CTMO\",\"cont\":true,\"open\":true,\"mac\":\"AA:BB:CC:DD:EE:FF\"}",
+486:    "{\"brand\":\"Qingping\",\"model\":\"Contact Sensor\",\"model_id\":\"CGH1\",\"type\":\"CTMO\",\"cont\":true,\"open\":false,\"mac\":\"58:2D:34:60:10:75\"}",
+487:    "{\"brand\":\"Qingping\",\"model\":\"Contact Sensor\",\"model_id\":\"CGH1\",\"type\":\"CTMO\",\"cont\":true,\"open\":true,\"mac\":\"58:2D:34:60:10:75\"}",
+488:    "{\"brand\":\"Qingping\",\"model\":\"Contact Sensor\",\"model_id\":\"CGH1\",\"type\":\"CTMO\",\"cont\":true,\"open\":false,\"mac\":\"58:2D:34:60:10:75\"}",
+1612:    TheengsDecoder::BLE_ID_NUM::CGH1,
+1613:    TheengsDecoder::BLE_ID_NUM::CGH1,
+1614:    TheengsDecoder::BLE_ID_NUM::CGH1,
+1615:    TheengsDecoder::BLE_ID_NUM::CGH1,
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:58:31</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/decoder/tests/BLE/test_ble.cpp",
+  "offset": 480,
+  "limit": 20
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:58:31</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+480	    "{\"brand\":\"Qingping\",\"model\":\"Motion & Light\",\"model_id\":\"CGPR1\",\"type\":\"CTMO\",\"cont\":true,\"lux\":517,\"batt\":100,\"mac\":\"AA:BB:CC:DD:EE:FF\"}",
+481	    "{\"brand\":\"Qingping\",\"model\":\"Motion & Light\",\"model_id\":\"CGPR1\",\"type\":\"CTMO\",\"cont\":true,\"lux\":3,\"motion\":true,\"mac\":\"AA:BB:CC:DD:EE:FF\"}",
+482	    "{\"brand\":\"Qingping\",\"model\":\"Motion & Light\",\"model_id\":\"CGPR1\",\"type\":\"CTMO\",\"cont\":true,\"lux\":3,\"motion\":false,\"mac\":\"AA:BB:CC:DD:EE:FF\"}",
+483	    "{\"brand\":\"Qingping\",\"model\":\"Motion & Light\",\"model_id\":\"CGPR1\",\"type\":\"CTMO\",\"cont\":true,\"motion\":true,\"mac\":\"AA:BB:CC:DD:EE:FF\"}",
+484	    "{\"brand\":\"Qingping\",\"model\":\"Motion & Light\",\"model_id\":\"CGPR1\",\"type\":\"CTMO\",\"cont\":true,\"motion\":false,\"mac\":\"AA:BB:CC:DD:EE:FF\"}",
+485	    "{\"brand\":\"Qingping\",\"model\":\"Contact Sensor\",\"model_id\":\"CGH1\",\"type\":\"CTMO\",\"cont\":true,\"open\":true,\"mac\":\
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:58:36</sup>
+
+Now get the raw hex payloads for those 4 CGH1 test cases:
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:58:37</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/decoder/tests/BLE/test_ble.cpp",
+  "offset": 1605,
+  "limit": 25
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:58:37</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1605	    TheengsDecoder::BLE_ID_NUM::CGDK2_STOCK,
+1606	    TheengsDecoder::BLE_ID_NUM::CGPR1,
+1607	    TheengsDecoder::BLE_ID_NUM::CGPR1,
+1608	    TheengsDecoder::BLE_ID_NUM::CGPR1,
+1609	    TheengsDecoder::BLE_ID_NUM::CGPR1,
+1610	    TheengsDecoder::BLE_ID_NUM::CGPR1,
+1611	    TheengsDecoder::BLE_ID_NUM::CGPR1,
+1612	    TheengsDecoder::BLE_ID_NUM::CGH1,
+1613	    TheengsDecoder::BLE_ID_NUM::CGH1,
+1614	    TheengsDecoder::BLE_ID_NUM::CGH1,
+1615	    TheengsDecoder::BLE_ID_NUM::CGH1,
+1616	    TheengsDecoder::BLE_ID_NUM::CGG1_STOCK,
+1617	    TheengsDecoder::BLE_ID_NUM::CGG1_STOCK,
+1618	    TheengsDecoder::BLE_ID_NUM::CGG1_STOCK,
+1619	    TheengsDecoder::BLE_ID_NUM::CGD1,
+1620	    TheengsDecoder::BLE_ID_NUM::JAALEE,
+1621	    TheengsDecoder::BLE_ID_NUM::JAALEE,
+1622	    TheengsDecoder::BLE_ID_NUM::SBCU,
+1623	    TheengsDecoder::BLE_ID_NUM::BC08,
+1624	    TheengsDecoder::BLE_ID_NUM::BC08,
+1625	    TheengsDecoder::BLE_ID_NUM::SBCS,
+1626	    TheengsDecoder::BLE_ID_NUM::SBMS,
+1627	    TheengsDec
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:58:41</sup>
+
+The ID array entry indices 1612-1615 correspond to expected output lines 485-488 (0-indexed within the array). Now I need to find the raw servicedata hex payloads. Let me find the raw data array:
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:58:42</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n \"servicedata\\|AABBCCDDEEFF\\|582D3460\" /Users/mah/Ballon/src/BalloonWare/sensor-ble/decoder/tests/BLE/test_ble.cpp | grep -i \"cgh1\\|04 04\\|0404\" | head -10",
+  "description": "Find CGH1 raw servicedata entries"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:58:42</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+(Bash completed with no output)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:58:45</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n \"AABBCCDDEEFF\\|AA:BB:CC\" /Users/mah/Ballon/src/BalloonWare/sensor-ble/decoder/tests/BLE/test_ble.cpp | head -10",
+  "description": "Find test entries with AABBCCDDEEFF MAC"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:58:45</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+10:    "{\"brand\":\"Xiaomi\",\"model\":\"Mi Jia round\",\"model_id\":\"LYWSDCGQ\",\"type\":\"THB\",\"batt\":81,\"mac\":\"AA:BB:CC:DD:EE:FF\"}",
+16:    "{\"brand\":\"Xiaomi\",\"model\":\"Formaldehyde detector\",\"model_id\":\"JQJCY01YM\",\"type\":\"AIR\",\"tempc\":19.6,\"tempf\":67.28,\"mac\":\"AA:BB:CC:DD:EE:FF\"}",
+18:    "{\"brand\":\"Xiaomi\",\"model\":\"RoPot\",\"model_id\":\"HHCCPOT002\",\"type\":\"PLANT\",\"fer\":1,\"mac\":\"AA:BB:CC:DD:EE:FF\"}",
+19:    "{\"brand\":\"April Brother\",\"model\":\"N03\",\"model_id\":\"ABN03\",\"type\":\"THBX\",\"track\":true,\"tempc\":-2.625,\"tempf\":27.275,\"hum\":63.5,\"lux\":350,\"batt\":100,\"mac\":\"AA:BB:CC:DD:EE:FF\"}",
+71:    "{\"brand\":\"Oria\",\"model\":\"TH Sensor\",\"model_id\":\"T301\",\"type\":\"THB\",\"cidc\":false,\"acts\":true,\"tempc\":25.6,\"tempf\":78.08,\"hum\":56,\"batt\":99,\"mac\":\"AA:BB:CC:DD:EE:FF\"}",
+72:    "{\"brand\":\"Oria\",\"model\":\"TH Sensor\",\"model_id\":\"T301\",\"type\":\"THB\",\"cidc\":false,\"acts\":tru
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:58:49</sup>
+
+The test structure has separate raw data arrays. Let me find the raw servicedata payloads around the CGH1 region:
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:58:50</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "\n# The raw data array entries should be around the same line count offset from expected outputs.\n# Expected lines 485-488. Let me search for the raw data structures near these lines.\ngrep -n \"\\\"servicedata\\\"\" /Users/mah/Ballon/src/BalloonWare/sensor-ble/decoder/tests/BLE/test_ble.cpp | grep -A2 -B2 \"fdcd\" | head -40",
+  "description": "Find servicedata entries with fdcd UUID in test file"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:58:50</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1452:    {"Switchbot_Contact", "0x0d00", "servicedata", "6440c1050000000000"},
+1453:    {"Switchbot_Contact", "0xfd3d", "servicedata", "6440c1050000000000"},
+1454:    {"Qingping Air Monitor Lite", "0xfdcd", "servicedata", "080eaabbccddeeff010422014c011204710072001302ed03"},
+1455:    {"Qingping Air Monitor Lite", "0xfdcd", "servicedata", "880eaabbccddeeff0104f900b50112047d0186011302fd02"},
+1456:    {"Qingping Air Monitor Lite", "0xfdcd", "servicedata", "880eaabbccddeeff0104f600ab011204a400d7001302c702"},
+1457:    {"Qingping Air Monitor Lite", "0xfdcd", "servicedata", "8824aabbccddeeff0104ce0028021204050005001302d701"},
+1458:    {"Service data", "0x180f", "servicedata", "21"},
+1459:    {"ClearGrass alarm clock", "0xfdcd", "servicedata", "080caffd50342d5801040a017f0202012a"},
+1460:    {"ClearGrass alarm clock", "0xfdcd", "servicedata", "080caffd50342d5801040d019e020201aa"},
+1461:    {"ClearGrass alarm clock", "0xfdcd", "servicedata", "080caffd50342d5801040e019102020155"},
+1462:    {"Clear
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:58:53</sup>
+
+Lines 1474-1477 are the CGH1 test payloads. Now I can decode them precisely:
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:59:06</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\n// CGH1 theengs condition:\n// Short format (28 nibbles = 14 bytes): servicedata[2] = 0x04, bit_static_value at nibble 21, bit 0, invert=true\n// Long format (34 nibbles = 17 bytes): servicedata[2] = 0x04, bit_static_value at nibble 33, bit 0, invert=true\n//\n// sensor-ble: serviceData['fdcd'] buffer = the raw service payload\n// Theengs nibble offset N -> byte offset N/2 in that buffer\n//\n// revmac_from_hex_data at nibble 4 -> byte 2, read 6 bytes reversed -> MAC\n//\n// bit_static_value: nibble 21 -> byte 10 (21/2=10), high nibble (even nibble)\n//   bit 0 of that nibble, invert=true -> open = 1 - bit\n// bit_static_value: nibble 33 -> byte 16 (33/2=16), low nibble (odd nibble)\n//   bit 0 of that nibble, invert=true -> open = 1 - bit\n\nfunction bitFromNibble(buf, nibbleOff, bitIdx) {\n  const byteOff = nibbleOff >> 1;\n  const nibble = (nibbleOff & 1) ? (buf[byteOff] & 0x0F) : (buf[byteOff] >> 4);\n  return (nibble >> bitIdx) & 1;\n}\n\nfunction revmac(buf, nibbleOff) {\n  const byteOff = nibbleOff >> 1;\n  const bytes = buf.slice(byteOff, byteOff + 6);\n  return [...bytes].reverse().map(b => b.toString(16).padStart(2,'0')).join(':');\n}\n\nconst cases = [\n  ['Door Open (14 bytes)',    '0804ffeeddccbbaa0201600f012b0f0100'],\n  ['Door Close (14 bytes)',   '0804751060342d580201600f01420f0101'],\n  ['Door Open Action (12b)', '4804751060342d580401000f01cb'],\n  ['Door Close Action (12b)','4804751060342d580401010f01d5'],\n];\n\nfor (const [name, hex] of cases) {\n  const buf = Buffer.from(hex, 'hex');\n  console.log(name, 'len='+buf.length, 'bytes:', hex);\n  console.log('  buf[1]=0x'+buf[1].toString(16), '(device_id)');\n  const mac = revmac(buf, 4); // nibble 4 = byte 2\n  console.log('  mac from nibble 4:', mac);\n  if (buf.length === 14) {\n    // short format: nibble 21, bit 0, invert\n    const rawBit = bitFromNibble(buf, 21, 0);\n    const open = 1 - rawBit;\n    console.log('  nibble 21 -> byte', 21>>1, 'rawBit='+rawBit, 'open=
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:59:11</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+Door Open (14 bytes) len=17 bytes: 0804ffeeddccbbaa0201600f012b0f0100
+  buf[1]=0x4 (device_id)
+  mac from nibble 4: aa:bb:cc:dd:ee:ff
+  nibble 33 -> byte 16 rawBit=0 open=1
+Door Close (14 bytes) len=17 bytes: 0804751060342d580201600f01420f0101
+  buf[1]=0x4 (device_id)
+  mac from nibble 4: 58:2d:34:60:10:75
+  nibble 33 -> byte 16 rawBit=1 open=0
+Door Open Action (12b) len=14 bytes: 4804751060342d580401000f01cb
+  buf[1]=0x4 (device_id)
+  mac from nibble 4: 58:2d:34:60:10:75
+  nibble 21 -> byte 10 rawBit=0 open=1
+Door Close Action (12b) len=14 bytes: 4804751060342d580401010f01d5
+  buf[1]=0x4 (device_id)
+  mac from nibble 4: 58:2d:34:60:10:75
+  nibble 21 -> byte 10 rawBit=1 open=0
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:59:17</sup>
+
+The names in the test file are misleading — actual lengths differ. Let me verify against expected outputs (lines 485-488):
+
+- Line 485: `open:true, mac:AA:BB:CC:DD:EE:FF` → matches "Door Open" (len=17, open=1) ✓
+- Line 486: `open:false, mac:58:2D:34:60:10:75` → matches "Door Close" (len=17, open=0) ✓  
+- Line 487: `open:true, mac:58:2D:34:60:10:75` → matches "Door Open Action" (len=14, open=1) ✓
+- Line 488: `open:false, mac:58:2D:34:60:10:75` → matches "Door Close Action" (len=14, open=0) ✓
+
+Now I also need to verify the `0x04` TLV records in the 17-byte format. Let me also read the current qingping.js to see its full state:
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:59:18</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/qingping.js"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:59:18</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	const DEVICE_TYPES = {
+2	  0x01: "CGG1",
+3	  0x07: "CGG1",
+4	  0x09: "CGP1W",
+5	  0x0C: "CGD1",
+6	  0x0E: "CGDN1",
+7	  0x12: "CGPR1",
+8	};
+9	
+10	function decodeQingping(_manufacturerData, serviceData) {
+11	  console.log("quingping")
+12	  const buf = serviceData?.["fdcd"];
+13	  if (!buf || buf.length < 8) return null;
+14	
+15	  const deviceId = buf[1];
+16	  if (!DEVICE_TYPES[deviceId]) return null;
+17	
+18	  const result = {};
+19	
+20	  // TLV records start at buf[8]
+21	  let off = 8;
+22	  while (off + 2 <= buf.length) {
+23	    const id = buf[off];
+24	    const size = buf[off + 1];
+25	    off += 2;
+26	    if (off + size > buf.length) break;
+27	    const d = buf.slice(off, off + size);
+28	    if (id === 0x01 && size === 4) {
+29	      result.temperature_C = d.readInt16LE(0) / 10;
+30	      result.humidity_percent = d.readUInt16LE(2) / 10;
+31	    } else if (id === 0x02 && size === 1) {
+32	      result.battery_percent = d[0];
+33	    } else if (id === 0x07 && size === 2) {
+34	      result.pres
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:59:22</sup>
+
+I also see the `console.log("quingping")` debug line added by the user — I should leave that as-is (it's intentional user modification). Now I have everything needed. Let me also examine what TLV `0x04` looks like in the 17-byte payloads to understand the full structure:
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:59:27</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\n// Analyze the 17-byte CGH1 payloads:\n// '0804ffeeddccbbaa0201600f012b0f0100'\n// '0804751060342d580201600f01420f0101'\nconst bufs = [\n  Buffer.from('0804ffeeddccbbaa0201600f012b0f0100','hex'),\n  Buffer.from('0804751060342d580201600f01420f0101','hex'),\n];\nfor (const buf of bufs) {\n  console.log('len', buf.length);\n  // TLV from offset 8\n  let off = 8;\n  while (off + 2 <= buf.length) {\n    const id = buf[off], sz = buf[off+1];\n    const d = buf.slice(off+2, off+2+sz);\n    console.log('  TLV id=0x'+id.toString(16), 'size='+sz, 'data='+d.toString('hex'));\n    off += 2 + sz;\n  }\n  // nibble 33 = byte 16 (low nibble since 33 is odd)\n  console.log('  byte 16 = 0x'+buf[16].toString(16), 'low nibble:', buf[16]&0x0F, 'bit0:', buf[16]&1);\n}\n\"\n",
+  "description": "Analyze TLV structure of 17-byte CGH1 payloads"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:59:29</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+len 17
+  TLV id=0x2 size=1 data=60
+  TLV id=0xf size=1 data=2b
+  TLV id=0xf size=1 data=00
+  byte 16 = 0x0 low nibble: 0 bit0: 0
+len 17
+  TLV id=0x2 size=1 data=60
+  TLV id=0xf size=1 data=42
+  TLV id=0xf size=1 data=01
+  byte 16 = 0x1 low nibble: 1 bit0: 1
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:59:34</sup>
+
+The 17-byte format has a `0x0F` TLV at the end carrying the contact state as a 1-byte value (0=open, 1=closed). The Theengs approach reads it via bit extraction, but it's equivalent to: the last `0x0F` TLV byte directly encodes open/closed (0=open, 1=closed), so `open = (value === 0) ? 1 : 0`. 
+
+The 14-byte format has a `0x04` TLV:
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:59:38</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\nconst bufs = [\n  ['DoorOpenAction',  Buffer.from('4804751060342d580401000f01cb','hex')],\n  ['DoorCloseAction', Buffer.from('4804751060342d580401010f01d5','hex')],\n];\nfor (const [name, buf] of bufs) {\n  console.log(name, 'len', buf.length);\n  let off = 8;\n  while (off + 2 <= buf.length) {\n    const id = buf[off], sz = buf[off+1];\n    const d = buf.slice(off+2, off+2+sz);\n    console.log('  TLV id=0x'+id.toString(16), 'size='+sz, 'data='+d.toString('hex'));\n    off += 2 + sz;\n  }\n  // nibble 21 = byte 10 (high nibble since 21 is odd... wait: odd nibble = low nibble)\n  // nibble 21: 21 is odd -> low nibble of byte 10\n  console.log('  byte 10=0x'+buf[10].toString(16), 'low nibble:', buf[10]&0x0F, 'bit0:', buf[10]&1);\n}\n\"\n",
+  "description": "Analyze TLV structure of 14-byte CGH1 payloads"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:59:39</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+DoorOpenAction len 14
+  TLV id=0x4 size=1 data=00
+  TLV id=0xf size=1 data=cb
+  byte 10=0x0 low nibble: 0 bit0: 0
+DoorCloseAction len 14
+  TLV id=0x4 size=1 data=01
+  TLV id=0xf size=1 data=d5
+  byte 10=0x1 low nibble: 1 bit0: 1
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:59:55</sup>
+
+Both formats are clear. The `0x04` TLV (1 byte): `0=open, 1=closed` — so `open_dimensionless = value === 0 ? 1 : 0`. The `0x0F` TLV in the 17-byte format: last `0x0F` TLV carries same: `0=open, 1=closed`.
+
+The simplest unified approach: CGH1 decoding reads the `0x04` TLV for open state (14-byte format), or the last `0x0F` TLV byte (17-byte format). But actually, looking at the TLV walker — the existing walker already handles `0x0F` as a packet_id. For CGH1, the `0x0F` TLV encodes contact state. This is **device-specific** semantics. The cleanest solution: for `device_id === 0x04`, handle both `0x04` TLV (action format) and `0x0F` TLV (status format) differently.
+
+Now I have everything. Writing the plan:
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:59:55</sup>
+
+<details>
+<summary>Tool: <code>ToolSearch</code></summary>
+
+```json
+{
+  "query": "select:EnterPlanMode,ExitPlanMode",
+  "max_results": 2
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 16:59:55</sup>
+
+
+---
+
+## Assistant <sup>10/05/2026, 16:59:57</sup>
+
+Writing the plan file now.
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:00:21</sup>
+
+<details>
+<summary>Tool: <code>Write</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/.claude/plans/the-current-qingping-js-decoder-snappy-feather.md",
+  "content": "# Plan: Add CGH1 (Contact Sensor) support to qingping.js\n\n## Context\n\n`devices/qingping.js` decodes Qingping BLE service data (UUID `fdcd`). It currently handles device types 0x01/0x07/0x09/0x0C/0x0E/0x12. Device ID `0x04` = CGH1 (Contact/Door Sensor) is missing.\n\nSource: `decoder/src/devices/CGH1_json.h` + `decoder/tests/BLE/test_ble.cpp` lines 1474-1477 (raw payloads) and 485-488 (expected output).\n\n---\n\n## CGH1 Payload Formats\n\nTwo variants, both use `serviceUUID: fdcd`, `buf[1] === 0x04`.\n\n### Short (14 bytes) — action/event report\n```\noffset 0:  flags byte\noffset 1:  0x04 (device_id)\noffset 2-7: MAC (reversed, 6 bytes)\noffset 8+: TLV records\n  0x04, 0x01, <val>   — contact state: 0=open, 1=closed\n  0x0F, 0x01, <seq>   — packet sequence (ignored)\n```\n\n### Long (17 bytes) — status report\n```\noffset 0:  flags byte\noffset 1:  0x04 (device_id)\noffset 2-7: MAC (reversed, 6 bytes)\noffset 8+: TLV records\n  0x02, 0x01, <batt>  — battery percent\n  0x0F, 0x01, <seq>   — packet sequence (ignored)\n  0x0F, 0x01, <val>   — contact state: 0=open, 1=closed  ← last 0x0F record\n```\n\n**open_dimensionless**: `1` when open, `0` when closed (value `0` = open, `1` = closed).\n\nDerived from Theengs `bit_static_value` with `invert=true`:\n- Short: nibble 21 → byte 10, low nibble, bit 0, inverted\n- Long: nibble 33 → byte 16, low nibble, bit 0, inverted\n\nEquivalent simpler reading: TLV `0x04` data byte directly (`0=open→1, 1=closed→0`); for long format, the last `0x0F` byte carries same encoding.\n\n---\n\n## Changes Required\n\n### `devices/qingping.js`\n\n1. Add `0x04: \"CGH1\"` to `DEVICE_TYPES`.\n\n2. In the TLV loop, add handler for `id === 0x04 && size === 1`:\n   ```js\n   result.open_dimensionless = d[0] === 0 ? 1 : 0;\n   ```\n\n3. For the long format's contact state: the existing `0x0F` handler is currently absent from the TLV loop (
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:00:22</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+File created successfully at: /Users/mah/.claude/plans/the-current-qingping-js-decoder-snappy-feather.md (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:00:24</sup>
+
+<details>
+<summary>Tool: <code>ExitPlanMode</code></summary>
+
+```json
+{
+  "plan": "# Plan: Add CGH1 (Contact Sensor) support to qingping.js\n\n## Context\n\n`devices/qingping.js` decodes Qingping BLE service data (UUID `fdcd`). It currently handles device types 0x01/0x07/0x09/0x0C/0x0E/0x12. Device ID `0x04` = CGH1 (Contact/Door Sensor) is missing.\n\nSource: `decoder/src/devices/CGH1_json.h` + `decoder/tests/BLE/test_ble.cpp` lines 1474-1477 (raw payloads) and 485-488 (expected output).\n\n---\n\n## CGH1 Payload Formats\n\nTwo variants, both use `serviceUUID: fdcd`, `buf[1] === 0x04`.\n\n### Short (14 bytes) — action/event report\n```\noffset 0:  flags byte\noffset 1:  0x04 (device_id)\noffset 2-7: MAC (reversed, 6 bytes)\noffset 8+: TLV records\n  0x04, 0x01, <val>   — contact state: 0=open, 1=closed\n  0x0F, 0x01, <seq>   — packet sequence (ignored)\n```\n\n### Long (17 bytes) — status report\n```\noffset 0:  flags byte\noffset 1:  0x04 (device_id)\noffset 2-7: MAC (reversed, 6 bytes)\noffset 8+: TLV records\n  0x02, 0x01, <batt>  — battery percent\n  0x0F, 0x01, <seq>   — packet sequence (ignored)\n  0x0F, 0x01, <val>   — contact state: 0=open, 1=closed  ← last 0x0F record\n```\n\n**open_dimensionless**: `1` when open, `0` when closed (value `0` = open, `1` = closed).\n\nDerived from Theengs `bit_static_value` with `invert=true`:\n- Short: nibble 21 → byte 10, low nibble, bit 0, inverted\n- Long: nibble 33 → byte 16, low nibble, bit 0, inverted\n\nEquivalent simpler reading: TLV `0x04` data byte directly (`0=open→1, 1=closed→0`); for long format, the last `0x0F` byte carries same encoding.\n\n---\n\n## Changes Required\n\n### `devices/qingping.js`\n\n1. Add `0x04: \"CGH1\"` to `DEVICE_TYPES`.\n\n2. In the TLV loop, add handler for `id === 0x04 && size === 1`:\n   ```js\n   result.open_dimensionless = d[0] === 0 ? 1 : 0;\n   ```\n\n3. For the long format's contact state: the existing `0x0F` handler is currently absent from the TLV loop (packet_id was intentionally omitted). The last `0x0F` TLV in a 17-byte CGH1 payload carries cont
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:00:32</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+User has approved your plan. You can now start coding. Start with updating your todo list if applicable
+
+Your plan has been saved to: /Users/mah/.claude/plans/the-current-qingping-js-decoder-snappy-feather.md
+You can refer back to it if needed during implementation.
+
+## Approved Plan (edited by user):
+# Plan: Add CGH1 (Contact Sensor) support to qingping.js
+
+## Context
+
+`devices/qingping.js` decodes Qingping BLE service data (UUID `fdcd`). It currently handles device types 0x01/0x07/0x09/0x0C/0x0E/0x12. Device ID `0x04` = CGH1 (Contact/Door Sensor) is missing.
+
+Source: `decoder/src/devices/CGH1_json.h` + `decoder/tests/BLE/test_ble.cpp` lines 1474-1477 (raw payloads) and 485-488 (expected output).
+
+---
+
+## CGH1 Payload Formats
+
+Two variants, both use `serviceUUID: fdcd`, `buf[1] === 0x04`.
+
+### Short (14 bytes) — action/event report
+```
+offset 0:  flags byte
+offset 1:  0x04 (device_id)
+offset 2-7: MAC (reversed, 6 bytes)
+offset 8+: TLV records
+  0x04, 0x01, <val>   — contact state: 0=o
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:00:36</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/qingping.js",
+  "old_string": "const DEVICE_TYPES = {\n  0x01: \"CGG1\",\n  0x07: \"CGG1\",\n  0x09: \"CGP1W\",\n  0x0C: \"CGD1\",\n  0x0E: \"CGDN1\",\n  0x12: \"CGPR1\",\n};",
+  "new_string": "const DEVICE_TYPES = {\n  0x01: \"CGG1\",\n  0x04: \"CGH1\",\n  0x07: \"CGG1\",\n  0x09: \"CGP1W\",\n  0x0C: \"CGD1\",\n  0x0E: \"CGDN1\",\n  0x12: \"CGPR1\",\n};"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:00:37</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/qingping.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:00:51</sup>
+
+Now add the `0x04` TLV handler and post-loop fallback for the long format:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:00:52</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/qingping.js",
+  "old_string": "    if (id === 0x01 && size === 4) {",
+  "new_string": "    if (id === 0x04 && size === 1) {\n      result.open_dimensionless = d[0] === 0 ? 1 : 0;\n    } else if (id === 0x01 && size === 4) {"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:00:53</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/qingping.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:00:56</sup>
+
+Now add the post-loop fallback for the 17-byte CGH1 long format (contact state in last byte):
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:00:58</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/qingping.js",
+  "old_string": "    off += size;\n  }\n\n  return result;",
+  "new_string": "    off += size;\n  }\n\n  // CGH1 long format (17 bytes): contact state in last byte, 0=open, 1=closed\n  if (deviceId === 0x04 && buf.length === 17 && result.open_dimensionless === undefined) {\n    result.open_dimensionless = buf[16] === 0 ? 1 : 0;\n  }\n\n  return result;"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:00:59</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/qingping.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:01:02</sup>
+
+Now add the 4 test cases:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:01:11</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/qingping.js",
+  "old_string": "  {\n    // CGDN1: temperature, humidity, PM2.5, PM10, CO2\n    given: { serviceData: { fdcd: \"080ea3808fe64854010422014c011204710072001302ed03\" } },\n    expected: {\n      temperature_C: 29,\n      humidity_percent: 33.2,\n      pm2_5_ugm3: 113,\n      pm10_ugm3: 114,\n      co2_ppm: 1005,\n    },\n  },\n];",
+  "new_string": "  {\n    // CGDN1: temperature, humidity, PM2.5, PM10, CO2\n    given: { serviceData: { fdcd: \"080ea3808fe64854010422014c011204710072001302ed03\" } },\n    expected: {\n      temperature_C: 29,\n      humidity_percent: 33.2,\n      pm2_5_ugm3: 113,\n      pm10_ugm3: 114,\n      co2_ppm: 1005,\n    },\n  },\n  {\n    // CGH1: long format (17 bytes), open, battery\n    given: { serviceData: { fdcd: \"0804ffeeddccbbaa0201600f012b0f0100\" } },\n    expected: {\n      battery_percent: 96,\n      open_dimensionless: 1,\n    },\n  },\n  {\n    // CGH1: long format (17 bytes), closed, battery\n    given: { serviceData: { fdcd: \"0804751060342d580201600f01420f0101\" } },\n    expected: {\n      battery_percent: 96,\n      open_dimensionless: 0,\n    },\n  },\n  {\n    // CGH1: short format (14 bytes), open action\n    given: { serviceData: { fdcd: \"4804751060342d580401000f01cb\" } },\n    expected: {\n      open_dimensionless: 1,\n    },\n  },\n  {\n    // CGH1: short format (14 bytes), close action\n    given: { serviceData: { fdcd: \"4804751060342d580401010f01d5\" } },\n    expected: {\n      open_dimensionless: 0,\n    },\n  },\n];"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:01:12</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/qingping.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:01:14</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "npm test 2>&1",
+  "description": "Run unit tests"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:01:14</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+> sensor-ble@0.0.1 test
+> node harness/test.js
+
+Test passed airpods
+Test passed airpods
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mopeka
+Test passed mopeka
+Test passed musev3
+Test passed musev3
+quingping
+Test passed qingping
+quingping
+Test passed qingping
+quingping
+Test passed qingping
+quingping
+Test passed qingping
+quingping
+Test passed qingping
+quingping
+Test passed qingping
+quingping
+Test passed qingping
+quingping
+Test passed qingping
+quingping
+Test passed qingping
+quingping
+Test passed qingping
+quingping
+Test passed qingping
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed ruuvi
+Test passed ruuvi
+All tests completed.
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:01:18</sup>
+
+All 11 qingping tests pass (7 existing + 4 new CGH1).
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:01:18</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "npm run decode:update 2>&1",
+  "description": "Update regression snapshots"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:01:18</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+> sensor-ble@0.0.1 decode:update
+> node harness/regression.js --update
+
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingping
+quingpin
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:01:24</sup>
+
+All tests pass, snapshots updated. The `console.log` debug output is clearly firing many times — that's the user's intentional debug line.
+
+CGH1 support added to [devices/qingping.js](devices/qingping.js):
+- `0x04` entry in `DEVICE_TYPES`
+- `0x04` TLV handler → `open_dimensionless` (short/action format, 14 bytes)
+- Post-loop fallback reads `buf[16]` for long/status format (17 bytes)
+- 4 test cases covering all 4 Theengs test payloads (2 long, 2 short)
 
 
 ---

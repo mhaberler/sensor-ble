@@ -1,5 +1,6 @@
 const DEVICE_TYPES = {
   0x01: "CGG1",
+  0x04: "CGH1",
   0x07: "CGG1",
   0x09: "CGP1W",
   0x0C: "CGD1",
@@ -8,7 +9,6 @@ const DEVICE_TYPES = {
 };
 
 function decodeQingping(_manufacturerData, serviceData) {
-  console.log("quingping")
   const buf = serviceData?.["fdcd"];
   if (!buf || buf.length < 8) return null;
 
@@ -25,7 +25,9 @@ function decodeQingping(_manufacturerData, serviceData) {
     off += 2;
     if (off + size > buf.length) break;
     const d = buf.slice(off, off + size);
-    if (id === 0x01 && size === 4) {
+    if (id === 0x04 && size === 1) {
+      result.open_dimensionless = d[0] === 0 ? 1 : 0;
+    } else if (id === 0x01 && size === 4) {
       result.temperature_C = d.readInt16LE(0) / 10;
       result.humidity_percent = d.readUInt16LE(2) / 10;
     } else if (id === 0x02 && size === 1) {
@@ -48,6 +50,11 @@ function decodeQingping(_manufacturerData, serviceData) {
       result.co2_ppm = d.readUInt16LE(0);
     }
     off += size;
+  }
+
+  // CGH1 long format (17 bytes): contact state in last byte, 0=open, 1=closed
+  if (deviceId === 0x04 && buf.length === 17 && result.open_dimensionless === undefined) {
+    result.open_dimensionless = buf[16] === 0 ? 1 : 0;
   }
 
   return result;
@@ -123,6 +130,36 @@ export const tests = [
       pm2_5_ugm3: 113,
       pm10_ugm3: 114,
       co2_ppm: 1005,
+    },
+  },
+  {
+    // CGH1: long format (17 bytes), open, battery
+    given: { serviceData: { fdcd: "0804ffeeddccbbaa0201600f012b0f0100" } },
+    expected: {
+      battery_percent: 96,
+      open_dimensionless: 1,
+    },
+  },
+  {
+    // CGH1: long format (17 bytes), closed, battery
+    given: { serviceData: { fdcd: "0804751060342d580201600f01420f0101" } },
+    expected: {
+      battery_percent: 96,
+      open_dimensionless: 0,
+    },
+  },
+  {
+    // CGH1: short format (14 bytes), open action
+    given: { serviceData: { fdcd: "4804751060342d580401000f01cb" } },
+    expected: {
+      open_dimensionless: 1,
+    },
+  },
+  {
+    // CGH1: short format (14 bytes), close action
+    given: { serviceData: { fdcd: "4804751060342d580401010f01d5" } },
+    expected: {
+      open_dimensionless: 0,
     },
   },
 ];

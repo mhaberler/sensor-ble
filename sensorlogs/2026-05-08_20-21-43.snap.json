@@ -25,6 +25,15 @@
     }
   },
   {
+    "decoderName": "qingping",
+    "id": "58:2D:34:80:BE:E8",
+    "time": "1778271703838000000",
+    "result": {
+      "battery_percent": 11,
+      "open_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "mopeka",
     "id": "CC:52:69:42:FD:86",
     "time": "1778271704175000000",
@@ -313,12 +322,29 @@
     }
   },
   {
+    "decoderName": "qingping",
+    "id": "58:2D:34:80:BE:E8",
+    "time": "1778271719272000000",
+    "result": {
+      "battery_percent": 11,
+      "open_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "bthome",
     "id": "3C:2E:F5:6D:86:9B",
     "time": "1778271721043000000",
     "result": {
       "packetId": 55,
       "battery_percent": 100
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "58:2D:34:80:BE:E8",
+    "time": "1778271721078000000",
+    "result": {
+      "open_dimensionless": 1
     }
   },
   {
@@ -335,6 +361,14 @@
       "rawLevel_mm": 560,
       "propaneLevel_mm": 291.49,
       "macAddress": "fa:09:b7"
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "58:2D:34:80:BE:E8",
+    "time": "1778271723005000000",
+    "result": {
+      "open_dimensionless": 0
     }
   },
   {
@@ -363,12 +397,44 @@
     }
   },
   {
+    "decoderName": "qingping",
+    "id": "58:2D:34:80:BE:E8",
+    "time": "1778271724968000000",
+    "result": {
+      "open_dimensionless": 1
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "58:2D:34:80:BE:E8",
+    "time": "1778271726752000000",
+    "result": {
+      "open_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "bthome",
     "id": "3C:2E:F5:69:84:2C",
     "time": "1778271726762000000",
     "result": {
       "packetId": 121,
       "battery_percent": 74
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "58:2D:34:80:BE:E8",
+    "time": "1778271727761000000",
+    "result": {
+      "open_dimensionless": 1
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "58:2D:34:80:BE:E8",
+    "time": "1778271728771000000",
+    "result": {
+      "open_dimensionless": 0
     }
   },
   {
@@ -413,6 +479,14 @@
     }
   },
   {
+    "decoderName": "qingping",
+    "id": "58:2D:34:80:BE:E8",
+    "time": "1778271730029000000",
+    "result": {
+      "open_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "rc1010",
     "id": "D8:2C:C3:C6:5D:32",
     "time": "1778271730468000000",
@@ -431,6 +505,14 @@
       "current_A": 0.75,
       "speed_m/s": 0.72,
       "acceleration_m/s²": 0.692
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "58:2D:34:80:BE:E8",
+    "time": "1778271731432000000",
+    "result": {
+      "open_dimensionless": 1
     }
   },
   {

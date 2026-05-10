@@ -1,1 +1,74 @@
-[]
+[
+  {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1778423769691000000",
+    "result": {
+      "open_dimensionless": 0
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1778423770988000000",
+    "result": {
+      "open_dimensionless": 0
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1778423772039000000",
+    "result": {
+      "open_dimensionless": 1
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1778423773071000000",
+    "result": {
+      "open_dimensionless": 0
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1778423774123000000",
+    "result": {
+      "open_dimensionless": 0
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1778423775139000000",
+    "result": {
+      "open_dimensionless": 1
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1778423776207000000",
+    "result": {
+      "open_dimensionless": 1
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1778423777239000000",
+    "result": {
+      "open_dimensionless": 0
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1778423778260000000",
+    "result": {
+      "open_dimensionless": 0
+    }
+  }
+]

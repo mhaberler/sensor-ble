@@ -177,6 +177,15 @@
     }
   },
   {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1774718554476000000",
+    "result": {
+      "battery_percent": 14,
+      "open_dimensionless": 1
+    }
+  },
+  {
     "decoderName": "mopeka",
     "id": "aa06218b-d30a-9150-b69e-866cec951617",
     "time": "1774718554761000000",
@@ -444,6 +453,15 @@
       "movement_dimensionless": 208,
       "measurementSequence_dimensionless": 23919,
       "macAddress": "e4:32:87:19:b4:c9"
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1774718558483000000",
+    "result": {
+      "battery_percent": 14,
+      "open_dimensionless": 1
     }
   },
   {
@@ -945,6 +963,15 @@
     }
   },
   {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1774718566519000000",
+    "result": {
+      "battery_percent": 14,
+      "open_dimensionless": 1
+    }
+  },
+  {
     "decoderName": "ruuvi",
     "id": "43ba075b-b678-39cc-5b38-d26982745151",
     "time": "1774718566810000000",
@@ -1195,6 +1222,15 @@
       "devicetype": 1,
       "fwversion4": "4.2.1.0",
       "fwversion3": "6.1.0"
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1774718570528000000",
+    "result": {
+      "battery_percent": 14,
+      "open_dimensionless": 1
     }
   },
   {
@@ -1722,6 +1758,15 @@
     }
   },
   {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1774718582579000000",
+    "result": {
+      "battery_percent": 14,
+      "open_dimensionless": 1
+    }
+  },
+  {
     "decoderName": "bthome",
     "id": "da4d073d-3e67-6fef-fa52-a598a635cdf8",
     "time": "1774718582784000000",
@@ -1863,6 +1908,15 @@
     }
   },
   {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1774718586593000000",
+    "result": {
+      "battery_percent": 14,
+      "open_dimensionless": 1
+    }
+  },
+  {
     "decoderName": "mopeka",
     "id": "4d32cf1c-6e29-06a6-bd40-5dba3183f3cb",
     "time": "1774718587220000000",
@@ -1944,6 +1998,15 @@
       "devicetype": 1,
       "fwversion4": "4.2.1.0",
       "fwversion3": "6.1.0"
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1774718590617000000",
+    "result": {
+      "battery_percent": 14,
+      "open_dimensionless": 1
     }
   },
   {
@@ -2109,6 +2172,15 @@
       "movement_dimensionless": 89,
       "measurementSequence_dimensionless": 64930,
       "macAddress": "ea:29:c4:ac:f9:e5"
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1774718594635000000",
+    "result": {
+      "battery_percent": 14,
+      "open_dimensionless": 1
     }
   },
   {
@@ -2278,6 +2350,15 @@
       "devicetype": 1,
       "fwversion4": "4.2.1.0",
       "fwversion3": "6.1.0"
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1774718598661000000",
+    "result": {
+      "battery_percent": 14,
+      "open_dimensionless": 1
     }
   },
   {
@@ -3880,6 +3961,15 @@
     }
   },
   {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1774718638866000000",
+    "result": {
+      "battery_percent": 14,
+      "open_dimensionless": 1
+    }
+  },
+  {
     "decoderName": "mopeka",
     "id": "aa06218b-d30a-9150-b69e-866cec951617",
     "time": "1774718639043000000",
@@ -4586,6 +4676,15 @@
     }
   },
   {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1774718658903000000",
+    "result": {
+      "battery_percent": 14,
+      "open_dimensionless": 1
+    }
+  },
+  {
     "decoderName": "bthome",
     "id": "da4d073d-3e67-6fef-fa52-a598a635cdf8",
     "time": "1774718659202000000",
@@ -4683,6 +4782,15 @@
       "movement_dimensionless": 236,
       "measurementSequence_dimensionless": 11130,
       "macAddress": "c2:6e:d1:70:2b:44"
+    }
+  },
+  {
+    "decoderName": "qingping",
+    "id": "6ba34040-8fa3-ede4-1954-15bf2190f101",
+    "time": "1774718662911000000",
+    "result": {
+      "battery_percent": 14,
+      "open_dimensionless": 1
     }
   },
   {
