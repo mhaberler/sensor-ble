@@ -56,6 +56,15 @@
     }
   },
   {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718551959000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "ruuvi",
     "id": "43ba075b-b678-39cc-5b38-d26982745151",
     "time": "1774718552666000000",
@@ -198,6 +207,15 @@
     "result": {
       "packetId": 91,
       "battery_percent": 93
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "2e75c8fe-77fe-4ac8-9ed7-1bec3f1987ca",
+    "time": "1774718556192000000",
+    "result": {
+      "level_percent": 37.7,
+      "status_dimensionless": 0
     }
   },
   {
@@ -385,6 +403,15 @@
     }
   },
   {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718558916000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "mopeka",
     "id": "8c8c59dd-63c8-b9cc-6a6d-a4aae4161cd1",
     "time": "1774718559089000000",
@@ -475,6 +502,15 @@
     }
   },
   {
+    "decoderName": "rc1010",
+    "id": "2e75c8fe-77fe-4ac8-9ed7-1bec3f1987ca",
+    "time": "1774718560596000000",
+    "result": {
+      "level_percent": 37.7,
+      "status_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "mopeka",
     "id": "dfef57b8-03cf-cb56-dce7-82e5341613a4",
     "time": "1774718560640000000",
@@ -522,6 +558,15 @@
       "movement_dimensionless": 74,
       "measurementSequence_dimensionless": 23971,
       "macAddress": "dd:79:c6:8f:bd:a2"
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718561119000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
     }
   },
   {
@@ -612,6 +657,15 @@
       "current_A": 1.04,
       "speed_m/s": -0.38,
       "acceleration_m/s²": 0.519999
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718563326000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
     }
   },
   {
@@ -778,6 +832,15 @@
     }
   },
   {
+    "decoderName": "rc1010",
+    "id": "2e75c8fe-77fe-4ac8-9ed7-1bec3f1987ca",
+    "time": "1774718565007000000",
+    "result": {
+      "level_percent": 37.7,
+      "status_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "bthome",
     "id": "0ec428c3-0384-bbe8-5e27-6eadb4b798de",
     "time": "1774718565056000000",
@@ -800,6 +863,15 @@
       "rawLevel_mm": 0,
       "propaneLevel_mm": 0,
       "macAddress": "42:fd:86"
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718565531000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
     }
   },
   {
@@ -906,6 +978,15 @@
       "rawLevel_mm": 2040,
       "propaneLevel_mm": 1134.08,
       "macAddress": "79:44:21"
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718567733000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
     }
   },
   {
@@ -1151,6 +1232,15 @@
     }
   },
   {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718571715000000",
+    "result": {
+      "serial_dimensionless": 56001608,
+      "modeltype_dimensionless": 67367466
+    }
+  },
+  {
     "decoderName": "ruuvi",
     "id": "43ba075b-b678-39cc-5b38-d26982745151",
     "time": "1774718571946000000",
@@ -1323,6 +1413,15 @@
     }
   },
   {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718574714000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "bthome",
     "id": "da4d073d-3e67-6fef-fa52-a598a635cdf8",
     "time": "1774718575468000000",
@@ -1358,6 +1457,15 @@
       "current_A": 2.12,
       "speed_m/s": 1.5999999999999999,
       "acceleration_m/s²": 0.39599999999999996
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718576916000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
     }
   },
   {
@@ -1414,6 +1522,15 @@
       "current_A": 0.329,
       "speed_m/s": -0.8999999999999999,
       "acceleration_m/s²": 0.624
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718579127000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
     }
   },
   {
@@ -1520,6 +1637,15 @@
     }
   },
   {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718581330000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "bthome",
     "id": "da4d073d-3e67-6fef-fa52-a598a635cdf8",
     "time": "1774718581478000000",
@@ -1555,6 +1681,15 @@
       "rawLevel_mm": 2040,
       "propaneLevel_mm": 1134.08,
       "macAddress": "79:44:21"
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718583532000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
     }
   },
   {
@@ -1705,6 +1840,15 @@
     }
   },
   {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718589715000000",
+    "result": {
+      "serial_dimensionless": 56001608,
+      "modeltype_dimensionless": 67367466
+    }
+  },
+  {
     "decoderName": "bthome",
     "id": "da4d073d-3e67-6fef-fa52-a598a635cdf8",
     "time": "1774718589958000000",
@@ -1802,6 +1946,15 @@
       "current_A": 0.74,
       "speed_m/s": 1.42,
       "acceleration_m/s²": 0.39999999999999997
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718592713000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
     }
   },
   {
@@ -1962,6 +2115,15 @@
     "result": {
       "packetId": 103,
       "battery_percent": 82
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718597121000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
     }
   },
   {
@@ -2219,6 +2381,15 @@
     }
   },
   {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718603734000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "mopeka",
     "id": "aa06218b-d30a-9150-b69e-866cec951617",
     "time": "1774718603925000000",
@@ -2297,6 +2468,15 @@
     "result": {
       "packetId": 104,
       "battery_percent": 82
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718605935000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
     }
   },
   {
@@ -2621,6 +2801,15 @@
     }
   },
   {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718612918000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "bthome",
     "id": "0ec428c3-0384-bbe8-5e27-6eadb4b798de",
     "time": "1774718613514000000",
@@ -2684,6 +2873,15 @@
     }
   },
   {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718615124000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "mopeka",
     "id": "dfef57b8-03cf-cb56-dce7-82e5341613a4",
     "time": "1774718615309000000",
@@ -2725,6 +2923,15 @@
       "current_A": 1.07,
       "speed_m/s": -0.24,
       "acceleration_m/s²": 0.40599999999999997
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "2e75c8fe-77fe-4ac8-9ed7-1bec3f1987ca",
+    "time": "1774718616817000000",
+    "result": {
+      "level_percent": 37.7,
+      "status_dimensionless": 0
     }
   },
   {
@@ -3006,6 +3213,15 @@
     }
   },
   {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718625714000000",
+    "result": {
+      "serial_dimensionless": 56001608,
+      "modeltype_dimensionless": 67367466
+    }
+  },
+  {
     "decoderName": "bthome",
     "id": "da4d073d-3e67-6fef-fa52-a598a635cdf8",
     "time": "1774718626536000000",
@@ -3084,6 +3300,15 @@
     "result": {
       "packetId": 104,
       "battery_percent": 35
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718628713000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
     }
   },
   {
@@ -3330,6 +3555,15 @@
     }
   },
   {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718635318000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "bthome",
     "id": "da4d073d-3e67-6fef-fa52-a598a635cdf8",
     "time": "1774718635548000000",
@@ -3410,6 +3644,15 @@
       "movement_dimensionless": 89,
       "measurementSequence_dimensionless": 64947,
       "macAddress": "ea:29:c4:ac:f9:e5"
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718637529000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
     }
   },
   {
@@ -3518,6 +3761,15 @@
       "rawLevel_mm": 950,
       "propaneLevel_mm": 525.38,
       "macAddress": "ca:12:55"
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718641936000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
     }
   },
   {
@@ -3879,6 +4131,15 @@
     }
   },
   {
+    "decoderName": "rc1010",
+    "id": "2e75c8fe-77fe-4ac8-9ed7-1bec3f1987ca",
+    "time": "1774718650602000000",
+    "result": {
+      "level_percent": 37.7,
+      "status_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "mopeka",
     "id": "9179c4ff-47ad-53ee-f6b1-e8a09e8a70b0",
     "time": "1774718651621000000",
@@ -3911,6 +4172,15 @@
     "result": {
       "packetId": 107,
       "battery_percent": 35
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718653131000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
     }
   },
   {
@@ -3990,6 +4260,15 @@
       "current_A": 1.18,
       "speed_m/s": 1.5599999999999998,
       "acceleration_m/s²": 0.69
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718655335000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
     }
   },
   {
@@ -4121,6 +4400,15 @@
     }
   },
   {
+    "decoderName": "rc1010",
+    "id": "2e75c8fe-77fe-4ac8-9ed7-1bec3f1987ca",
+    "time": "1774718659422000000",
+    "result": {
+      "level_percent": 37.7,
+      "status_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "bthome",
     "id": "da4d073d-3e67-6fef-fa52-a598a635cdf8",
     "time": "1774718660205000000",
@@ -4210,6 +4498,15 @@
     }
   },
   {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718663710000000",
+    "result": {
+      "serial_dimensionless": 56001608,
+      "modeltype_dimensionless": 67367466
+    }
+  },
+  {
     "decoderName": "bthome",
     "id": "da4d073d-3e67-6fef-fa52-a598a635cdf8",
     "time": "1774718665206000000",
@@ -4231,6 +4528,15 @@
       "current_A": 1.61,
       "speed_m/s": -1.42,
       "acceleration_m/s²": 0.61
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "5b178f0c-f323-a116-de3e-ad31daea7246",
+    "time": "1774718666720000000",
+    "result": {
+      "level_percent": 40.1,
+      "status_dimensionless": 0
     }
   },
   {

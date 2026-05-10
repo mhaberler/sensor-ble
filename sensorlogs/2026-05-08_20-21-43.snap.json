@@ -1,5 +1,14 @@
 [
   {
+    "decoderName": "rc1010",
+    "id": "D8:2C:C3:C6:5D:32",
+    "time": "1778271703640000000",
+    "result": {
+      "level_percent": 36.9,
+      "status_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "mopeka",
     "id": "C3:03:89:6E:8D:17",
     "time": "1778271703826000000",
@@ -91,6 +100,15 @@
     }
   },
   {
+    "decoderName": "rc1010",
+    "id": "D8:2C:C3:C6:5D:32",
+    "time": "1778271705850000000",
+    "result": {
+      "level_percent": 36.9,
+      "status_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "bthome",
     "id": "B0:C7:DE:25:67:7A",
     "time": "1778271706082000000",
@@ -177,6 +195,15 @@
     }
   },
   {
+    "decoderName": "rc1010",
+    "id": "D8:2C:C3:C6:5D:32",
+    "time": "1778271712473000000",
+    "result": {
+      "level_percent": 36.9,
+      "status_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "mopeka",
     "id": "C3:03:89:6E:8D:17",
     "time": "1778271714372000000",
@@ -242,6 +269,15 @@
       "rawLevel_mm": 560,
       "propaneLevel_mm": 291.49,
       "macAddress": "fa:09:b7"
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "D8:2C:C3:C6:5D:32",
+    "time": "1778271723880000000",
+    "result": {
+      "level_percent": 36.9,
+      "status_dimensionless": 0
     }
   },
   {
@@ -311,6 +347,15 @@
     }
   },
   {
+    "decoderName": "rc1010",
+    "id": "D8:2C:C3:C6:5D:32",
+    "time": "1778271730468000000",
+    "result": {
+      "level_percent": 36.9,
+      "status_dimensionless": 0
+    }
+  },
+  {
     "decoderName": "bthome",
     "id": "48:CA:43:3A:34:05",
     "time": "1778271731135000000",
@@ -320,6 +365,15 @@
       "current_A": 0.75,
       "speed_m/s": 0.72,
       "acceleration_m/s²": 0.692
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "F8:EE:CC:42:AF:8D",
+    "time": "1778271731496000000",
+    "result": {
+      "level_percent": 39,
+      "status_dimensionless": 0
     }
   }
 ]

@@ -51,3 +51,11 @@ Set `variableFormat: true` when returned keys vary per device (e.g. BTHome). Con
 ## Regression Tests
 
 `sensorlogs/` holds captured BLE log files (`.json`) and their snapshots (`.snap.json`). Regression test diffs decoded output against snapshot. To add a new log: place `.json` in `sensorlogs/`, run `npm run decode:update` to generate the `.snap.json`, commit both.
+
+## Adding a New Device (Theengs)
+
+Use the `/theengs_decoder` skill to port a Theengs `.h` descriptor to a `devices/<name>.js` module.
+
+Source files live in `theengs_decoder/src/devices/` (checked out under `theengs_decoder/`). Test data in `theengs_decoder/tests/BLE/test_ble.cpp`.
+
+Skill handles: offset translation, column naming, null sentinels, test derivation, `main.js` registration, and regression snapshot generation. Invoke with the `.h` file path or device name.

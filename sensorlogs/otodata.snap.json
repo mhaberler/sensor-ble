@@ -1,0 +1,38 @@
+[
+  {
+    "decoderName": "rc1010",
+    "id": "F8:EE:CC:42:AF:8D",
+    "time": "1778415130958000000",
+    "result": {
+      "level_percent": 39.2,
+      "status_dimensionless": 0
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "F8:EE:CC:42:AF:8D",
+    "time": "1778415151165000000",
+    "result": {
+      "level_percent": 39.2,
+      "status_dimensionless": 0
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "D8:2C:C3:C6:5D:32",
+    "time": "1778415129822000000",
+    "result": {
+      "level_percent": 37.1,
+      "status_dimensionless": 0
+    }
+  },
+  {
+    "decoderName": "rc1010",
+    "id": "D8:2C:C3:C6:5D:32",
+    "time": "1778415150039000000",
+    "result": {
+      "level_percent": 37.1,
+      "status_dimensionless": 0
+    }
+  }
+]
