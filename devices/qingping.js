@@ -57,6 +57,10 @@ function decodeQingping(_manufacturerData, serviceData) {
     result.open_dimensionless = buf[16] === 0 ? 1 : 0;
   }
 
+  if (deviceId === 0x04) {
+    result.macAddress = [...buf.slice(2, 8)].reverse().map(b => b.toString(16).padStart(2, "0")).join(":");
+  }
+
   return result;
 }
 
@@ -138,6 +142,7 @@ export const tests = [
     expected: {
       battery_percent: 96,
       open_dimensionless: 1,
+      macAddress: "aa:bb:cc:dd:ee:ff",
     },
   },
   {
@@ -146,6 +151,7 @@ export const tests = [
     expected: {
       battery_percent: 96,
       open_dimensionless: 0,
+      macAddress: "58:2d:34:60:10:75",
     },
   },
   {
@@ -153,6 +159,7 @@ export const tests = [
     given: { serviceData: { fdcd: "4804751060342d580401000f01cb" } },
     expected: {
       open_dimensionless: 1,
+      macAddress: "58:2d:34:60:10:75",
     },
   },
   {
@@ -160,6 +167,7 @@ export const tests = [
     given: { serviceData: { fdcd: "4804751060342d580401010f01d5" } },
     expected: {
       open_dimensionless: 0,
+      macAddress: "58:2d:34:60:10:75",
     },
   },
 ];

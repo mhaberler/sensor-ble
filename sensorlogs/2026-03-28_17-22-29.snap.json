@@ -182,7 +182,8 @@
     "time": "1774718554476000000",
     "result": {
       "battery_percent": 14,
-      "open_dimensionless": 1
+      "open_dimensionless": 1,
+      "macAddress": "58:2d:34:80:be:e8"
     }
   },
   {
@@ -461,7 +462,8 @@
     "time": "1774718558483000000",
     "result": {
       "battery_percent": 14,
-      "open_dimensionless": 1
+      "open_dimensionless": 1,
+      "macAddress": "58:2d:34:80:be:e8"
     }
   },
   {
@@ -968,7 +970,8 @@
     "time": "1774718566519000000",
     "result": {
       "battery_percent": 14,
-      "open_dimensionless": 1
+      "open_dimensionless": 1,
+      "macAddress": "58:2d:34:80:be:e8"
     }
   },
   {
@@ -1230,7 +1233,8 @@
     "time": "1774718570528000000",
     "result": {
       "battery_percent": 14,
-      "open_dimensionless": 1
+      "open_dimensionless": 1,
+      "macAddress": "58:2d:34:80:be:e8"
     }
   },
   {
@@ -1763,7 +1767,8 @@
     "time": "1774718582579000000",
     "result": {
       "battery_percent": 14,
-      "open_dimensionless": 1
+      "open_dimensionless": 1,
+      "macAddress": "58:2d:34:80:be:e8"
     }
   },
   {
@@ -1913,7 +1918,8 @@
     "time": "1774718586593000000",
     "result": {
       "battery_percent": 14,
-      "open_dimensionless": 1
+      "open_dimensionless": 1,
+      "macAddress": "58:2d:34:80:be:e8"
     }
   },
   {
@@ -2006,7 +2012,8 @@
     "time": "1774718590617000000",
     "result": {
       "battery_percent": 14,
-      "open_dimensionless": 1
+      "open_dimensionless": 1,
+      "macAddress": "58:2d:34:80:be:e8"
     }
   },
   {
@@ -2180,7 +2187,8 @@
     "time": "1774718594635000000",
     "result": {
       "battery_percent": 14,
-      "open_dimensionless": 1
+      "open_dimensionless": 1,
+      "macAddress": "58:2d:34:80:be:e8"
     }
   },
   {
@@ -2358,7 +2366,8 @@
     "time": "1774718598661000000",
     "result": {
       "battery_percent": 14,
-      "open_dimensionless": 1
+      "open_dimensionless": 1,
+      "macAddress": "58:2d:34:80:be:e8"
     }
   },
   {
@@ -3966,7 +3975,8 @@
     "time": "1774718638866000000",
     "result": {
       "battery_percent": 14,
-      "open_dimensionless": 1
+      "open_dimensionless": 1,
+      "macAddress": "58:2d:34:80:be:e8"
     }
   },
   {
@@ -4681,7 +4691,8 @@
     "time": "1774718658903000000",
     "result": {
       "battery_percent": 14,
-      "open_dimensionless": 1
+      "open_dimensionless": 1,
+      "macAddress": "58:2d:34:80:be:e8"
     }
   },
   {
@@ -4790,7 +4801,8 @@
     "time": "1774718662911000000",
     "result": {
       "battery_percent": 14,
-      "open_dimensionless": 1
+      "open_dimensionless": 1,
+      "macAddress": "58:2d:34:80:be:e8"
     }
   },
   {

@@ -6,8 +6,8 @@
 | **Session ID** | `d23acc51-ad18-49ac-b576-358ca4c3a788` |
 | **Working Dir** | `/Users/mah/Ballon/src/BalloonWare/sensor-ble` |
 | **Started** | 10/05/2026, 16:04:19 |
-| **Last Updated** | 10/05/2026, 17:06:07 |
-| **Messages** | 236 |
+| **Last Updated** | 10/05/2026, 17:07:49 |
+| **Messages** | 246 |
 
 ---
 
@@ -4445,6 +4445,170 @@ Done. Added to [theengs_decoder/SKILL.md](theengs_decoder/SKILL.md):
 
 - **Workflow**: bleparser cross-check — run bleparser test payloads through the JS decoder; agreement between two independent implementations is strong correctness signal.
 - **Gotchas**: Theengs covers variants bleparser misses (CGH1 example); TLV ID overloading is device-type-specific; post-loop fallback pattern for multi-length formats.
+
+
+---
+
+## User <sup>10/05/2026, 17:07:22</sup>
+
+add mac address to output for type 4
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:07:26</sup>
+
+The CGH1 decoder already has the MAC bytes at `buf[2..7]` (reversed). Quick targeted edit.
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:07:28</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/qingping.js",
+  "old_string": "  // CGH1 long format (17 bytes): contact state in last byte, 0=open, 1=closed\n  if (deviceId === 0x04 && buf.length === 17 && result.open_dimensionless === undefined) {\n    result.open_dimensionless = buf[16] === 0 ? 1 : 0;\n  }\n\n  return result;",
+  "new_string": "  // CGH1 long format (17 bytes): contact state in last byte, 0=open, 1=closed\n  if (deviceId === 0x04 && buf.length === 17 && result.open_dimensionless === undefined) {\n    result.open_dimensionless = buf[16] === 0 ? 1 : 0;\n  }\n\n  if (deviceId === 0x04) {\n    result.macAddress = [...buf.slice(2, 8)].reverse().map(b => b.toString(16).padStart(2, \"0\")).join(\":\");\n  }\n\n  return result;"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:07:30</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/qingping.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:07:34</sup>
+
+Now update the 4 CGH1 test cases to include the expected `macAddress`:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:07:42</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/qingping.js",
+  "old_string": "  {\n    // CGH1: long format (17 bytes), open, battery\n    given: { serviceData: { fdcd: \"0804ffeeddccbbaa0201600f012b0f0100\" } },\n    expected: {\n      battery_percent: 96,\n      open_dimensionless: 1,\n    },\n  },\n  {\n    // CGH1: long format (17 bytes), closed, battery\n    given: { serviceData: { fdcd: \"0804751060342d580201600f01420f0101\" } },\n    expected: {\n      battery_percent: 96,\n      open_dimensionless: 0,\n    },\n  },\n  {\n    // CGH1: short format (14 bytes), open action\n    given: { serviceData: { fdcd: \"4804751060342d580401000f01cb\" } },\n    expected: {\n      open_dimensionless: 1,\n    },\n  },\n  {\n    // CGH1: short format (14 bytes), close action\n    given: { serviceData: { fdcd: \"4804751060342d580401010f01d5\" } },\n    expected: {\n      open_dimensionless: 0,\n    },\n  },",
+  "new_string": "  {\n    // CGH1: long format (17 bytes), open, battery\n    given: { serviceData: { fdcd: \"0804ffeeddccbbaa0201600f012b0f0100\" } },\n    expected: {\n      battery_percent: 96,\n      open_dimensionless: 1,\n      macAddress: \"aa:bb:cc:dd:ee:ff\",\n    },\n  },\n  {\n    // CGH1: long format (17 bytes), closed, battery\n    given: { serviceData: { fdcd: \"0804751060342d580201600f01420f0101\" } },\n    expected: {\n      battery_percent: 96,\n      open_dimensionless: 0,\n      macAddress: \"58:2d:34:60:10:75\",\n    },\n  },\n  {\n    // CGH1: short format (14 bytes), open action\n    given: { serviceData: { fdcd: \"4804751060342d580401000f01cb\" } },\n    expected: {\n      open_dimensionless: 1,\n      macAddress: \"58:2d:34:60:10:75\",\n    },\n  },\n  {\n    // CGH1: short format (14 bytes), close action\n    given: { serviceData: { fdcd: \"4804751060342d580401010f01d5\" } },\n    expected: {\n      open_dimensionless: 0,\n      macAddress: \"58:2d:34:60:10:75\",\n    },\n  },"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:07:43</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/qingping.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:07:46</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "npm test 2>&1 | grep -E \"passed|failed|Error\"",
+  "description": "Run tests, show pass/fail lines only"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:07:46</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+Test passed airpods
+Test passed airpods
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mopeka
+Test passed mopeka
+Test passed musev3
+Test passed musev3
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed ruuvi
+Test passed ruuvi
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:07:49</sup>
+
+All pass. CGH1 now emits `macAddress` (reversed bytes 2–7, colon-separated lowercase hex).
 
 
 ---
