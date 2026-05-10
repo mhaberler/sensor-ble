@@ -176,10 +176,10 @@
     "time": "1778271706469000000",
     "result": {
       "temperature_C": null,
-      "acceleration_x_g": 255.99609375,
+      "acceleration_x_g": -0.00390625,
       "acceleration_y_g": 0.00390625,
-      "acceleration_z_g": 255.9609375,
-      "acceleration_g": 362.0082893476287,
+      "acceleration_z_g": -0.0390625,
+      "acceleration_g": 0.039451191165476865,
       "uptime_s": 7695971,
       "battery_percent": 80,
       "version_dimensionless": 1,

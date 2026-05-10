@@ -6,8 +6,8 @@
 | **Session ID** | `d23acc51-ad18-49ac-b576-358ca4c3a788` |
 | **Working Dir** | `/Users/mah/Ballon/src/BalloonWare/sensor-ble` |
 | **Started** | 10/05/2026, 16:04:19 |
-| **Last Updated** | 10/05/2026, 17:07:49 |
-| **Messages** | 246 |
+| **Last Updated** | 10/05/2026, 17:19:27 |
+| **Messages** | 320 |
 
 ---
 
@@ -4609,6 +4609,1511 @@ Test passed ruuvi
 ## Assistant <sup>10/05/2026, 17:07:49</sup>
 
 All pass. CGH1 now emits `macAddress` (reversed bytes 2–7, colon-separated lowercase hex).
+
+
+---
+
+## User <sup>10/05/2026, 17:11:14</sup>
+
+cross check mikrotik.js against theengs_decoder
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:11:17</sup>
+
+Reading both files in parallel.
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:11:17</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/mikrotik.js"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:11:17</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	function decodeMikrotik(manufacturerData) {
+2	  if (manufacturerData.length !== 20) return null;
+3	  if (manufacturerData[0] !== 0x4f || manufacturerData[1] !== 0x09) return null;
+4	
+5	  const p = manufacturerData.slice(2);
+6	  let off = 0;
+7	  const version   = p.readUInt8(off++);
+8	  const user_data = p.readUInt8(off++);
+9	  off += 2; // salt
+10	  const acc_x_frac = p.readUInt8(off++);
+11	  const acc_x      = p.readUInt8(off++);
+12	  const acc_y_frac = p.readUInt8(off++);
+13	  const acc_y      = p.readUInt8(off++);
+14	  const acc_z_frac = p.readUInt8(off++);
+15	  const acc_z      = p.readUInt8(off++);
+16	  const temp_frac  = p.readUInt8(off++);
+17	  const temp       = p.readInt8(off++);
+18	  const uptime     = p.readUInt32LE(off); off += 4;
+19	  const flags      = p.readUInt8(off++);
+20	  const batt       = p.readUInt8(off++);
+21	
+22	  if (user_data & 1) return null; // encrypted
+23	
+24	  const ax = acc_x + acc_x_frac / 256;
+25	  const ay = acc_y + acc_y_frac / 256;
+26	  const az =
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:11:18</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/decoder/src/devices/Mikrotik_json.h"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:11:18</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	const char* _Mikrotik_json = "{\"brand\":\"MikroTik\",\"model\":\"TG-BT5-IN/-OUT\",\"model_id\":\"TG-BT5\",\"tag\":\"0708\",\"condition\":[\"manufacturerdata\",\"=\",40,\"index\",0,\"4f090100\"],\"properties\":{\"tempc\":{\"decoder\":[\"value_from_hex_data\",\"manufacturerdata\",24,4,true,true],\"post_proc\":[\"/\",256]},\"accx\":{\"decoder\":[\"value_from_hex_data\",\"manufacturerdata\",12,4,true,true],\"post_proc\":[\"/\",256]},\"accy\":{\"decoder\":[\"value_from_hex_data\",\"manufacturerdata\",16,4,true,true],\"post_proc\":[\"/\",256]},\"accz\":{\"decoder\":[\"value_from_hex_data\",\"manufacturerdata\",20,4,true,true],\"post_proc\":[\"/\",256]},\"flag_reed\":{\"decoder\":[\"bit_static_value\",\"manufacturerdata\",37,0,false,true]},\"flag_tilt\":{\"decoder\":[\"bit_static_value\",\"manufacturerdata\",37,1,false,true]},\"flag_fall\":{\"decoder\":[\"bit_static_value\",\"manufacturerdata\",37,2,false,true]},\"flag_impact_x\":{\"decoder\":[\"bit_static_value\",\"manufacturerdata\",37,3
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:11:27</sup>
+
+Now I'll do the full cross-check analytically. Let me trace each Theengs field against the JS decoder.
+
+**Theengs nibble offsets → byte offsets (÷2), into manufacturerData buffer:**
+
+| Field | Theengs nibbles | Byte offset | Size | LE | Signed | post_proc |
+|---|---|---|---|---|---|---|
+| `tempc` | 24, 4 nibbles | byte 12, 2 bytes | LE | signed | /256 |
+| `accx` | 12, 4 nibbles | byte 6, 2 bytes | LE | signed | /256 |
+| `accy` | 16, 4 nibbles | byte 8, 2 bytes | LE | signed | /256 |
+| `accz` | 20, 4 nibbles | byte 10, 2 bytes | LE | signed | /256 |
+| `flag_reed` | nibble 37, bit 0 | byte 18 (37÷2), low nibble | — | — | — |
+| `flag_tilt` | nibble 37, bit 1 | byte 18, low nibble | — | — | — |
+| `flag_fall` | nibble 37, bit 2 | byte 18, low nibble | — | — | — |
+| `flag_impact_x` | nibble 37, bit 3 | byte 18, low nibble | — | — | — |
+| `flag_impact_y` | nibble 36, bit 0 | byte 18, high nibble | — | — | — |
+| `flag_impact_z` | nibble 36, bit 1 | byte 18, high nibble | — | — | — |
+| `uptime` | 28, 8 nibbles | byte 14, 4 bytes | LE | unsigned | — |
+| `batt` | 38, 2 nibbles | byte 19, 1 byte | BE | unsigned | &127 |
+
+Now the JS decoder reads `p = manufacturerData.slice(2)`, so `p[0]` = `mfr[2]`:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:11:52</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\n// Map Theengs byte offsets (into manufacturerData) to p[] offsets (p = mfr.slice(2))\n// Theengs mfr byte N -> p[N-2]\n// tempc: mfr byte 12, 2 bytes LE signed -> p[10] readInt16LE -> /256\n// accx:  mfr byte 6, 2 bytes LE signed -> p[4] readInt16LE -> /256\n// accy:  mfr byte 8, 2 bytes LE signed -> p[6] readInt16LE -> /256\n// accz:  mfr byte 10, 2 bytes LE signed -> p[8] readInt16LE -> /256\n// flags: mfr byte 18 -> p[16]\n//   nibble 37 (odd) = low nibble of byte 18 = p[16] & 0x0F\n//   nibble 36 (even) = high nibble of byte 18 = (p[16] >> 4) & 0x0F\n//   flag_reed:     nibble37 bit0 -> (p[16] & 0x0F) >> 0 & 1\n//   flag_tilt:     nibble37 bit1 -> (p[16] & 0x0F) >> 1 & 1\n//   flag_fall:     nibble37 bit2 -> (p[16] & 0x0F) >> 2 & 1\n//   flag_impact_x: nibble37 bit3 -> (p[16] & 0x0F) >> 3 & 1\n//   flag_impact_y: nibble36 bit0 -> (p[16] >> 4) & 1\n//   flag_impact_z: nibble36 bit1 -> (p[16] >> 4) >> 1 & 1\n// uptime: mfr byte 14, 4 bytes LE -> p[12] readUInt32LE\n// batt:   mfr byte 19, 1 byte -> p[17] & 127\n\n// JS decoder reads:\n// p[0]=version, p[1]=user_data, p[2..3]=salt(skip)\n// p[4]=acc_x_frac, p[5]=acc_x  -> accx = p[5] + p[4]/256\n// p[6]=acc_y_frac, p[7]=acc_y  -> accy = p[7] + p[6]/256\n// p[8]=acc_z_frac, p[9]=acc_z  -> accz = p[9] + p[8]/256\n// p[10]=temp_frac, p[11]=temp(signed) -> temp = p[11] + p[10]/256\n// p[12..15]=uptime LE\n// p[16]=flags\n// p[17]=batt\n\n// Theengs: accx = mfr[6..7] LE signed int16 / 256\n// JS:      accx = p[5] + p[4]/256  where p[4]=mfr[6], p[5]=mfr[7]\n// p[5] is the INTEGER part (high byte of LE int16), p[4] is the FRACTIONAL byte\n// For positive values: int16 LE = p[4] + p[5]*256, divide by 256 = p[4]/256 + p[5] ✓ same\n\n// Theengs: tempc = mfr[12..13] LE signed int16 / 256\n// JS: temp = p[11] readInt8 (= mfr[13] signed), temp_frac = p[10] (= mfr[12])\n// int16 LE from mfr[12..13]: low byte = mfr[12]=p[10], high byte = mfr[13]=p[11]\n// int16 / 256 = (p[10] + p[11]*256) / 256 = p[10
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:11:56</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+Analysis complete - see comments above
+DISCREPANCY: batt - Theengs applies &127, JS does not
+DISCREPANCY: tempc sentinel - Theengs outputs -128.0, JS outputs null
+All other fields: MATCH
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:12:00</sup>
+
+Also check the Theengs test data for this device to see if there are additional test cases or edge cases to cover:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:12:02</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "grep -n \"Mikrotik\\|TG-BT5\\|4f09\" /Users/mah/Ballon/src/BalloonWare/sensor-ble/decoder/tests/BLE/test_ble.cpp | head -20",
+  "description": "Find Mikrotik entries in Theengs test_ble.cpp"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:12:02</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+194:    "{\"brand\":\"MikroTik\",\"model\":\"TG-BT5-IN/-OUT\",\"model_id\":\"TG-BT5\",\"type\":\"ACEL\",\"track\":true,\"tempc\":28.625,\"tempf\":83.525,\"accx\":0,\"accy\":0,\"accz\":0.0078125,\"flag_reed\":false,\"flag_tilt\":false,\"flag_fall\":false,\"flag_impact_x\":true,\"flag_impact_y\":true,\"flag_impact_z\":false,\"uptime\":5703825,\"batt\":95}",
+195:    "{\"brand\":\"MikroTik\",\"model\":\"TG-BT5-IN/-OUT\",\"model_id\":\"TG-BT5\",\"type\":\"ACEL\",\"track\":true,\"tempc\":25.62890625,\"tempf\":78.13203125,\"accx\":-0.00390625,\"accy\":-0.0078125,\"accz\":0,\"flag_reed\":true,\"flag_tilt\":false,\"flag_fall\":false,\"flag_impact_x\":true,\"flag_impact_y\":false,\"flag_impact_z\":true,\"uptime\":744,\"batt\":100}",
+792:    {"Mikrotik", "TG-BT5-IN/-OUT", "4f090100cea6000000000200a01c91085700185f"},
+793:    {"Mikrotik", "TG-BT5-IN/-OUT", "4f0901009e11fffffeff0000a119e802000029e4"},
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:12:05</sup>
+
+Two Theengs test payloads with expected outputs that cover flags including non-zero cases. Let me decode them:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:12:11</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\nfunction decode(hex) {\n  const mfr = Buffer.from(hex, 'hex');\n  if (mfr.length !== 20) return 'bad length '+mfr.length;\n  const p = mfr.slice(2);\n  const version = p[0], user_data = p[1];\n  const acc_x_frac=p[2], acc_x=p[3], acc_y_frac=p[4], acc_y=p[5];\n  const acc_z_frac=p[6], acc_z=p[7], temp_frac=p[8], temp=p.readInt8(9);\n  const uptime=p.readUInt32LE(10);\n  const flags=p[14], batt=p[15];\n  const ax=acc_x+acc_x_frac/256, ay=acc_y+acc_y_frac/256, az=acc_z+acc_z_frac/256;\n  const temperature=temp===-128?null:temp+temp_frac/256;\n  console.log('hex:', hex);\n  console.log('  raw: version='+version+' user_data='+user_data+' flags=0x'+flags.toString(16)+' batt='+batt+' batt&127='+(batt&127));\n  console.log('  tempc='+temperature+' accx='+ax+' accy='+ay+' accz='+az);\n  console.log('  uptime='+uptime);\n  console.log('  reed='+(flags&1)+' tilt='+(flags&2)+' fall='+(flags&4)+' impX='+(flags&8)+' impY='+(flags&16)+' impZ='+(flags&32));\n  console.log('  Theengs expected: accx from int16LE p[2..3]='+p.readInt16LE(2)+'/256='+p.readInt16LE(2)/256);\n  console.log('  JS accx: '+ax);\n}\ndecode('4f090100cea6000000000200a01c91085700185f');\ndecode('4f0901009e11fffffeff0000a119e802000029e4');\n\"\n",
+  "description": "Decode both Theengs test payloads and compare against JS decoder logic"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:12:14</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+hex: 4f090100cea6000000000200a01c91085700185f
+  raw: version=1 user_data=0 flags=0x57 batt=0 batt&127=0
+  tempc=0.0078125 accx=166.8046875 accy=0 accz=0
+  uptime=143727776
+  reed=1 tilt=2 fall=4 impX=0 impY=16 impZ=0
+  Theengs expected: accx from int16LE p[2..3]=-22834/256=-89.1953125
+  JS accx: 166.8046875
+hex: 4f0901009e11fffffeff0000a119e802000029e4
+  raw: version=1 user_data=0 flags=0x0 batt=0 batt&127=0
+  tempc=0 accx=17.6171875 accy=255.99609375 accz=255.9921875
+  uptime=48765345
+  reed=0 tilt=0 fall=0 impX=0 impY=0 impZ=0
+  Theengs expected: accx from int16LE p[2..3]=4510/256=17.6171875
+  JS accx: 17.6171875
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:12:17</sup>
+
+Critical finding on the first payload. The Theengs expected output says `accx: 0, accy: 0, accz: 0.0078125` but my JS decoder reads `accx=166.8`, `accy=0`, `accz=0`. Let me recheck the byte layout carefully — the JS `p` offset assignments look wrong:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:12:30</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\n// Carefully re-read JS decoder field layout vs Theengs\n// mfr = '4f090100cea6000000000200a01c91085700185f'\n// p = mfr.slice(2) = bytes starting at mfr[2]\nconst mfr = Buffer.from('4f090100cea6000000000200a01c91085700185f','hex');\nconst p = mfr.slice(2);\nconsole.log('mfr:', [...mfr].map(b=>b.toString(16).padStart(2,'0')).join(' '));\nconsole.log('p:  ', [...p].map(b=>b.toString(16).padStart(2,'0')).join(' '));\nconsole.log('p indices: 0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17');\n\n// JS decoder reads sequentially with off pointer:\nlet off=0;\nconst version   = p.readUInt8(off++);  // p[0]\nconst user_data = p.readUInt8(off++);  // p[1]\noff += 2; // salt: p[2..3]\nconst acc_x_frac= p.readUInt8(off++);  // p[4]\nconst acc_x     = p.readUInt8(off++);  // p[5]\nconst acc_y_frac= p.readUInt8(off++);  // p[6]\nconst acc_y     = p.readUInt8(off++);  // p[7]\nconst acc_z_frac= p.readUInt8(off++);  // p[8]\nconst acc_z     = p.readUInt8(off++);  // p[9]\nconst temp_frac = p.readUInt8(off++);  // p[10]\nconst temp      = p.readInt8(off++);   // p[11]\nconst uptime    = p.readUInt32LE(off); off+=4; // p[12..15]\nconst flags     = p.readUInt8(off++);  // p[16]\nconst batt      = p.readUInt8(off++);  // p[17]\n\nconsole.log('JS: version='+version+' user_data='+user_data);\nconsole.log('JS: acc_x_frac='+acc_x_frac+' acc_x='+acc_x+' -> accx='+(acc_x+acc_x_frac/256));\nconsole.log('JS: acc_y_frac='+acc_y_frac+' acc_y='+acc_y+' -> accy='+(acc_y+acc_y_frac/256));\nconsole.log('JS: acc_z_frac='+acc_z_frac+' acc_z='+acc_z+' -> accz='+(acc_z+acc_z_frac/256));\nconsole.log('JS: temp_frac='+temp_frac+' temp='+temp+' -> tempc='+(temp===−128?null:temp+temp_frac/256));\nconsole.log('JS: uptime='+uptime+' flags=0x'+flags.toString(16)+' batt='+batt);\n\n// Theengs: accx at nibble 12, 4 nibbles = mfr bytes 6..7 (LE signed int16) / 256\n// mfr[6..7]:\nconsole.log('\\\\nTheengs accx: mfr[6..7]='+mfr[6].toString(16)+' '+mfr[7].toString(16)+' int16LE='
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:13:18</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+Exit code 1
+[eval]:32
+console.log('JS: temp_frac='+temp_frac+' temp='+temp+' -> tempc='+(temp===−128?null:temp+temp_frac/256));
+                                                                          
+Expression expected
+
+SyntaxError: Invalid or unexpected token
+    at makeContextifyScript (node:internal/vm:194:14)
+    at compileScript (node:internal/process/execution:420:10)
+    at evalTypeScript (node:internal/process/execution:292:22)
+    at node:internal/main/eval_string:71:3
+
+Node.js v26.0.0
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:13:28</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\nconst mfr = Buffer.from('4f090100cea6000000000200a01c91085700185f','hex');\nconst p = mfr.slice(2);\nconsole.log('mfr:', [...mfr].map(b=>b.toString(16).padStart(2,'0')).join(' '));\nconsole.log('p:  ', [...p].map(b=>b.toString(16).padStart(2,'0')).join(' '));\n\n// JS decoder sequential read\nlet off=0;\nconst version   = p.readUInt8(off++);  // p[0]\nconst user_data = p.readUInt8(off++);  // p[1]\noff += 2; // salt p[2..3]\nconst acc_x_frac= p.readUInt8(off++);  // p[4]\nconst acc_x     = p.readUInt8(off++);  // p[5]\nconst acc_y_frac= p.readUInt8(off++);  // p[6]\nconst acc_y     = p.readUInt8(off++);  // p[7]\nconst acc_z_frac= p.readUInt8(off++);  // p[8]\nconst acc_z     = p.readUInt8(off++);  // p[9]\nconst temp_frac = p.readUInt8(off++);  // p[10]\nconst temp      = p.readInt8(off++);   // p[11]\nconst uptime    = p.readUInt32LE(off); off+=4; // p[12..15]\nconst flags     = p.readUInt8(off++);  // p[16]\nconst batt      = p.readUInt8(off++);  // p[17]\n\nconsole.log('JS accx='+(acc_x+acc_x_frac/256)+' accy='+(acc_y+acc_y_frac/256)+' accz='+(acc_z+acc_z_frac/256));\nconsole.log('JS tempc='+(temp+temp_frac/256)+' uptime='+uptime+' flags=0x'+flags.toString(16)+' batt='+batt);\n\n// Theengs: nibble offsets into manufacturerData\n// accx: nibble 12, 4 nibbles = mfr[6..7] int16LE / 256\n// accy: nibble 16, 4 nibbles = mfr[8..9] int16LE / 256\n// accz: nibble 20, 4 nibbles = mfr[10..11] int16LE / 256\n// tempc: nibble 24, 4 nibbles = mfr[12..13] int16LE / 256\n// uptime: nibble 28, 8 nibbles = mfr[14..17] uint32LE\n// flags: nibble 36/37 = mfr[18]\n// batt: nibble 38, 2 nibbles = mfr[19] uint8 BE & 127\nconsole.log('\\\\nTheengs:');\nconsole.log('accx: mfr[6..7]=',mfr.readInt16LE(6),'/256='+(mfr.readInt16LE(6)/256));\nconsole.log('accy: mfr[8..9]=',mfr.readInt16LE(8),'/256='+(mfr.readInt16LE(8)/256));\nconsole.log('accz: mfr[10..11]=',mfr.readInt16LE(10),'/256='+(mfr.readInt16LE(10)/256));\nconsole.log('tempc: mfr[12..13]=',mfr.readInt16L
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:13:30</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+mfr: 4f 09 01 00 ce a6 00 00 00 00 02 00 a0 1c 91 08 57 00 18 5f
+p:   01 00 ce a6 00 00 00 00 02 00 a0 1c 91 08 57 00 18 5f
+JS accx=0 accy=0 accz=0.0078125
+JS tempc=28.625 uptime=5703825 flags=0x18 batt=95
+
+Theengs:
+accx: mfr[6..7]= 0 /256=0
+accy: mfr[8..9]= 0 /256=0
+accz: mfr[10..11]= 2 /256=0.0078125
+tempc: mfr[12..13]= 7328 /256=28.625
+uptime: mfr[14..17]= 5703825
+flags: mfr[18]=0x18
+batt: mfr[19]&127=95
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:13:38</sup>
+
+JS and Theengs agree perfectly on the first payload. My earlier calculation was wrong. Now check the second payload and the flags more carefully:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:13:44</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\nconst mfr2 = Buffer.from('4f0901009e11fffffeff0000a119e802000029e4','hex');\nconst p2 = mfr2.slice(2);\nconsole.log('mfr2:', [...mfr2].map(b=>b.toString(16).padStart(2,'0')).join(' '));\nlet off=0;\nconst version=p2[off++], user_data=p2[off++];\noff+=2;\nconst axf=p2[off++], ax=p2[off++], ayf=p2[off++], ay=p2[off++], azf=p2[off++], az=p2[off++];\nconst tf=p2[off++], t=p2.readInt8(off++);\nconst uptime=p2.readUInt32LE(off); off+=4;\nconst flags=p2[off++], batt=p2[off++];\nconsole.log('JS: accx='+(ax+axf/256)+' accy='+(ay+ayf/256)+' accz='+(az+azf/256));\nconsole.log('JS: tempc='+(t+tf/256)+' uptime='+uptime+' flags=0x'+flags.toString(16)+' batt='+batt);\nconsole.log('Theengs accx:',mfr2.readInt16LE(6),'/256='+(mfr2.readInt16LE(6)/256));\nconsole.log('Theengs accy:',mfr2.readInt16LE(8),'/256='+(mfr2.readInt16LE(8)/256));\nconsole.log('Theengs accz:',mfr2.readInt16LE(10),'/256='+(mfr2.readInt16LE(10)/256));\nconsole.log('Theengs tempc:',mfr2.readInt16LE(12),'/256='+(mfr2.readInt16LE(12)/256));\nconsole.log('Theengs uptime:',mfr2.readUInt32LE(14));\nconsole.log('Theengs flags: mfr[18]=0x'+mfr2[18].toString(16));\nconsole.log('Theengs batt: mfr[19]&127='+(mfr2[19]&127));\n// expected: tempc=25.62890625 accx=-0.00390625 accy=-0.0078125 accz=0\n//           flag_reed=true flag_impact_x=true flag_impact_z=true uptime=744 batt=100\n\"\n",
+  "description": "Check second Theengs test payload"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:13:46</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+mfr2: 4f 09 01 00 9e 11 ff ff fe ff 00 00 a1 19 e8 02 00 00 29 e4
+JS: accx=255.99609375 accy=255.9921875 accz=0
+JS: tempc=25.62890625 uptime=744 flags=0x29 batt=228
+Theengs accx: -1 /256=-0.00390625
+Theengs accy: -2 /256=-0.0078125
+Theengs accz: 0 /256=0
+Theengs tempc: 6561 /256=25.62890625
+Theengs uptime: 744
+Theengs flags: mfr[18]=0x29
+Theengs batt: mfr[19]&127=100
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:13:49</sup>
+
+Major findings now clear. Now fetching the official Mikrotik docs as requested:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:13:49</sup>
+
+<details>
+<summary>Tool: <code>ToolSearch</code></summary>
+
+```json
+{
+  "query": "select:WebFetch",
+  "max_results": 1
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:13:49</sup>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:13:54</sup>
+
+<details>
+<summary>Tool: <code>WebFetch</code></summary>
+
+```json
+{
+  "url": "https://help.mikrotik.com/docs/spaces/UM/pages/105742533/MikroTik+Tag+advertisement+formats",
+  "prompt": "Extract the full TLV/payload format for the MikroTik TG-BT5 BLE advertisement: byte layout, field names, sizes, units, signed/unsigned, scaling, and any sentinel values. Include the acceleration format (8.8 fixed point or int16?), temperature format, flags byte layout, battery format."
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:14:05</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+# MikroTik TG-BT5 BLE Advertisement Payload Format
+
+## Complete Byte Layout (Non-Encrypted MikroTik Format)
+
+| Byte(s) | Field | Size | Type | Format/Units | Notes |
+|---------|-------|------|------|--------------|-------|
+| 0-2 | Flags Header | 3 | const | `020106` | Standard BLE flags |
+| 3 | Length | 1 | uint8 | `0x15` (21 bytes) | Payload length |
+| 4 | Type | 1 | uint8 | `0xFF` | Manufacturer data |
+| 5-6 | Company ID | 2 | uint16 LE | `0x094F` | MikroTik identifier |
+| 7 | Version | 1 | uint8 | 1 (current) | Structure version |
+| 8 | Encryption Flag | 1 | uint8 | 0=unencrypted, 1=encrypted | Controls Secret section |
+| 9-10 | Salt | 2 | uint16 LE | Variable | "Does not contain useful information" |
+| 11-12 | Accel X-axis | 2 | int16 LE | 8.8 fixed-point | Divide by 256 for m/s² |
+| 13-14 | Accel Y-axis | 2 | int16 LE | 8.8 fixed-point | Divide by 256 for m/s² |
+| 15-16 | Accel Z-axis | 2 | int16 LE | 8.8 fixed-point | Divide by 256 for m/s² |
+| 17-18 | Temperature | 2 | int16 LE 
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:14:16</sup>
+
+Excellent — the official docs are definitive. Now I have the full picture. Let me map docs byte offsets against the JS decoder (`mfr = manufacturerData`, 0-indexed):
+
+Official doc byte numbering includes the full BLE adstruct preamble (flags, length, type, company ID). So the `manufacturerData` buffer in sensor-ble (which starts at the company ID byte) maps as: **doc byte 5 = mfr[0]**.
+
+- Doc byte 7 (Version) = mfr[2] = p[0] ✓
+- Doc byte 8 (Encryption flag) = mfr[3] = p[1] ✓
+- Doc bytes 9-10 (Salt) = mfr[4..5] = p[2..3] ✓
+- Doc bytes 11-12 (Accel X) = mfr[6..7] = p[4..5] — but JS reads `acc_x_frac = p[4]` (uint8), `acc_x = p[5]` (uint8), then `ax = acc_x + acc_x_frac/256`. This equals `mfr.readInt16LE(6) / 256` **only for non-negative values**. For negative (e.g. -1 = 0xFFFF), JS gives `255 + 255/256 = 255.996` not `-0.00390625`. **Bug.**
+- Doc bytes 17-18 (Temperature) = mfr[12..13] = p[10..11] — same signed int16 issue. JS reads `temp = p[11]` (Int8) + `temp_frac = p[10]` (uint8). For -1°C this gives `-1 + 255/256 = -0.00390625` which equals `int16(-1)/256` — actually that IS correct. Let me re-verify the acceleration case.
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:14:35</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\n// Verify signed 8.8 fixed-point arithmetic for JS decoder\n// JS method: ax = acc_x(uint8) + acc_x_frac(uint8)/256\n//            where acc_x = p[5] = mfr[7] (high byte), acc_x_frac = p[4] = mfr[6] (low byte)\n// Theengs: mfr.readInt16LE(6) / 256\n\n// Test case: accx = -0.00390625 = -1/256\n// int16LE = -1 = 0xFFFF -> mfr[6]=0xFF, mfr[7]=0xFF\n// JS: acc_x_frac=0xFF=255, acc_x=0xFF=255 (readUInt8 -- unsigned!)\n// ax = 255 + 255/256 = 255.996  WRONG -- should be -0.00390625\n\n// Test case: accx = -0.0078125 = -2/256  \n// int16LE = -2 = 0xFFFE -> mfr[6]=0xFE, mfr[7]=0xFF\n// JS: acc_x_frac=0xFE=254, acc_x=0xFF=255 (unsigned!)\n// ay = 255 + 254/256 = 255.992  WRONG -- should be -0.0078125\n\n// Temperature case: tempc = 25.62890625\n// int16LE = 25.62890625 * 256 = 6561 = 0x19A1 -> mfr[12]=0xA1, mfr[13]=0x19\n// JS: temp_frac=0xA1=161(uint8), temp=0x19=25(int8)\n// tempc = 25 + 161/256 = 25.62890625 ✓  (positive, works fine)\n\n// Temperature negative: -0.5 * 256 = -128 = 0xFF80\n// mfr[12]=0x80, mfr[13]=0xFF\n// JS: temp_frac=0x80=128, temp=0xFF=-1(int8)\n// tempc = -1 + 128/256 = -1 + 0.5 = -0.5 ✓  (works because int8 high byte + uint8 frac/256)\n\n// So: temperature 8.8 signed works correctly in JS because high byte is read as Int8.\n// Acceleration is BROKEN for negative values because high byte (acc_x) is read as UInt8 not Int8.\n// acc_x should be p.readInt8(off++) not p.readUInt8(off++)\n\nconsole.log('BUG CONFIRMED: acceleration uses readUInt8 for integer part, should be readInt8');\nconsole.log('Temperature is correct: uses readInt8 for integer part');\nconsole.log('');\n\n// Verify with second Theengs test payload:\nconst mfr = Buffer.from('4f0901009e11fffffeff0000a119e802000029e4','hex');\nconst p = mfr.slice(2);\n// JS (current buggy):\nconst axf_bug = p[4], ax_bug = p[5]; // UInt8\nconst ayf_bug = p[6], ay_bug = p[7]; // UInt8\nconsole.log('JS (buggy): accx='+(ax_bug+axf_bug/256)+' accy='+(ay_bug+ayf_bug/256));\n// JS (fix
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:14:37</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+BUG CONFIRMED: acceleration uses readUInt8 for integer part, should be readInt8
+Temperature is correct: uses readInt8 for integer part
+
+JS (buggy): accx=255.99609375 accy=255.9921875
+JS (fixed): accx=-0.00390625 accy=-0.0078125 accz=0
+Theengs:    accx=-0.00390625 accy=-0.0078125 accz=0
+Expected:   accx=-0.00390625 accy=-0.0078125 accz=0
+
+batt raw=0xe4=228 &127=100
+Theengs expected batt=100, &127=100, JS raw=228 BUG
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:14:43</sup>
+
+Two confirmed bugs. Also check the doc's battery description — it says "Direct uint8 decimal value (0x5F = 95%)" but the Theengs &127 mask strips the MSB. The raw 0xe4 = 228 has MSB set, masking gives 100. The docs don't mention the MSB flag; Theengs strips it anyway. Checking what the docs say vs what real payloads show — both agree the mask is needed for real values with MSB set.
+
+Now I have everything. Writing the plan:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:15:08</sup>
+
+<details>
+<summary>Tool: <code>Write</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/.claude/plans/the-current-qingping-js-decoder-snappy-feather.md",
+  "content": "# Plan: Fix mikrotik.js — two bugs found by Theengs cross-check\n\n## Context\n\nCross-checked `devices/mikrotik.js` against `decoder/src/devices/Mikrotik_json.h` (Theengs) and the official MikroTik TG-BT5 advertisement format docs. Found two bugs that only manifest with negative acceleration values and battery values ≥ 128.\n\n---\n\n## Bugs\n\n### Bug 1: Acceleration integer parts read as unsigned (UInt8) instead of signed (Int8)\n\n`acc_x`, `acc_y`, `acc_z` are the **high bytes** of a signed 8.8 fixed-point int16. They must be read as signed (Int8) to produce correct results for negative accelerations.\n\nCurrent code (`devices/mikrotik.js` lines 11-15):\n```js\nconst acc_x_frac = p.readUInt8(off++);\nconst acc_x      = p.readUInt8(off++);   // BUG: should be readInt8\nconst acc_y_frac = p.readUInt8(off++);\nconst acc_y      = p.readUInt8(off++);   // BUG: should be readInt8\nconst acc_z_frac = p.readUInt8(off++);\nconst acc_z      = p.readUInt8(off++);   // BUG: should be readInt8\n```\n\nEffect: negative acceleration (e.g. -0.00390625) reads as 255.996 instead.\nConfirmed with Theengs test payload `4f0901009e11fffffeff0000a119e802000029e4` — expected `accx=-0.00390625, accy=-0.0078125`, JS currently outputs `255.996, 255.992`.\n\nTemperature is unaffected — `temp` is already read as `readInt8` (line 17).\n\n### Bug 2: Battery not masked — MSB is a status flag, not magnitude\n\nTheengs applies `& 127` to the battery byte. Real payloads can have the MSB set (e.g. `0xe4 = 228 raw → 100%` after mask). Without the mask, the JS decoder returns 228.\n\nCurrent code (line 20):\n```js\nconst batt = p.readUInt8(off++);   // BUG: should mask & 0x7F\n```\n\n---\n\n## Fix\n\n**File**: `devices/mikrotik.js`\n\nChange `acc_x`, `acc_y`, `acc_z` from `readUInt8` to `readInt8`:\n```js\nconst acc_x_frac = p.readUInt8(off++);\nconst acc_x      = p.readInt8(off++);\nconst ac
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:15:09</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/.claude/plans/the-current-qingping-js-decoder-snappy-feather.md has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:15:12</sup>
+
+Plan is complete and correct — markdown warnings in the plan file don't affect execution.
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:15:12</sup>
+
+<details>
+<summary>Tool: <code>ExitPlanMode</code></summary>
+
+```json
+{
+  "allowedPrompts": [
+    {
+      "tool": "Bash",
+      "prompt": "run npm test"
+    },
+    {
+      "tool": "Bash",
+      "prompt": "run npm run decode:update"
+    }
+  ],
+  "plan": "# Plan: Fix mikrotik.js — two bugs found by Theengs cross-check\n\n## Context\n\nCross-checked `devices/mikrotik.js` against `decoder/src/devices/Mikrotik_json.h` (Theengs) and the official MikroTik TG-BT5 advertisement format docs. Found two bugs that only manifest with negative acceleration values and battery values ≥ 128.\n\n---\n\n## Bugs\n\n### Bug 1: Acceleration integer parts read as unsigned (UInt8) instead of signed (Int8)\n\n`acc_x`, `acc_y`, `acc_z` are the **high bytes** of a signed 8.8 fixed-point int16. They must be read as signed (Int8) to produce correct results for negative accelerations.\n\nCurrent code (`devices/mikrotik.js` lines 11-15):\n```js\nconst acc_x_frac = p.readUInt8(off++);\nconst acc_x      = p.readUInt8(off++);   // BUG: should be readInt8\nconst acc_y_frac = p.readUInt8(off++);\nconst acc_y      = p.readUInt8(off++);   // BUG: should be readInt8\nconst acc_z_frac = p.readUInt8(off++);\nconst acc_z      = p.readUInt8(off++);   // BUG: should be readInt8\n```\n\nEffect: negative acceleration (e.g. -0.00390625) reads as 255.996 instead.\nConfirmed with Theengs test payload `4f0901009e11fffffeff0000a119e802000029e4` — expected `accx=-0.00390625, accy=-0.0078125`, JS currently outputs `255.996, 255.992`.\n\nTemperature is unaffected — `temp` is already read as `readInt8` (line 17).\n\n### Bug 2: Battery not masked — MSB is a status flag, not magnitude\n\nTheengs applies `& 127` to the battery byte. Real payloads can have the MSB set (e.g. `0xe4 = 228 raw → 100%` after mask). Without the mask, the JS decoder returns 228.\n\nCurrent code (line 20):\n```js\nconst batt = p.readUInt8(off++);   // BUG: should mask & 0x7F\n```\n\n---\n\n## Fix\n\n**File**: `devices/mikrotik.js`\n\nChange `acc_x`, `acc_y`, `acc_z` from `readUInt8` to `readInt8`:\n```js\nconst acc_x_
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:15:14</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+User has approved your plan. You can now start coding. Start with updating your todo list if applicable
+
+Your plan has been saved to: /Users/mah/.claude/plans/the-current-qingping-js-decoder-snappy-feather.md
+You can refer back to it if needed during implementation.
+
+## Approved Plan (edited by user):
+# Plan: Fix mikrotik.js — two bugs found by Theengs cross-check
+
+## Context
+
+Cross-checked `devices/mikrotik.js` against `decoder/src/devices/Mikrotik_json.h` (Theengs) and the official MikroTik TG-BT5 advertisement format docs. Found two bugs that only manifest with negative acceleration values and battery values ≥ 128.
+
+---
+
+## Bugs
+
+### Bug 1: Acceleration integer parts read as unsigned (UInt8) instead of signed (Int8)
+
+`acc_x`, `acc_y`, `acc_z` are the **high bytes** of a signed 8.8 fixed-point int16. They must be read as signed (Int8) to produce correct results for negative accelerations.
+
+Current code (`devices/mikrotik.js` lines 11-15):
+```js
+const acc_x_frac = p.readUInt8(off++);
+
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:17:08</sup>
+
+---
+
+**⟫ Conversation compacted (auto) — 167,224 tokens before compact**
+
+---
+
+
+---
+
+## User <sup>10/05/2026, 17:17:08</sup>
+
+<details>
+<summary><b>Compact Summary (auto-generated context from previous conversation)</b></summary>
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Summary:
+1. Primary Request and Intent:
+   The session focused on building out the `sensor-ble` BLE decoder library. Key user requests in order:
+   - Build out `BLEPARSER.md` as a full skill document for porting bleparser Python decoders to sensor-ble JS modules
+   - Note upstream bleparser repo (https://github.com/Ernst79/bleparser) and local checkout at `bleparser/`
+   - Mandate bleparser test cases be included in every derived decoder
+   - Add a Mikrotik decoder from bleparser
+   - Add a Qingping decoder from bleparser
+   - Add CGH1 (contact sensor, device_id 0x04) support to qingping.js using Theengs decoder source
+   - Add learnings from CGH1 work to BLEPARSER.md
+   - Add bleparser cross-check learnings to theengs_decoder/SKILL.md
+   - Add MAC address output for CGH1 (type 4)
+   - Cross-check mikrotik.js against theengs_decoder and official MikroTik docs — **two bugs found, plan approved, implementation pending**
+
+2. Key Technical Concepts:
+   - BLE advertisement structure: adstruct format (len, type, companyID/UUID, payload)
+   - bleparser Python library: `parse_<device>(self, data, source_mac, rssi)` where `data` = full adstruct
+   - Offset translation: bleparser `data[n]` → sensor-ble `manufacturerData[n-2]`; service data `data[n]` → `serviceData["uuid"][n-4]`
+   - sensor-ble Decoder interface: `advertisementDecode(manufacturerData, serviceData) → SensorValues`
+   - Manufacturer routing via `manufacturer: "4f09"` hex string; service data via `serviceUUID: "fdcd"`
+   - Column naming: `name_unit` (e.g. `temperature_C`), `name_dimensionless`, bare names for strings
+   - `variableFormat: true` for decoders where returned keys vary per device
+   - Qingping TLV format: `[id, size, ...bytes]` records starting at serviceData buf offset 8
+   - Theengs decoder format: nibble offsets, `value_from_hex_data`, `bit_static_value`, `post_proc`
+   - Signed 8.8 fixed-point format: int16 LE / 256 = high_byte(Int8) + low_byte(UInt8)/256
+   - MikroTik battery byte: MSB is status flag, must mask `& 0x7F` for actual percentage
+   - CGH1 two-format dispatch: short (14-byte) uses TLV 0x04; long (17-byte) uses last byte post-loop
+
+3. Files and Code Sections:
+   - `BLEPARSER.md` — Full skill document for porting bleparser Python decoders. Written from scratch with: Python adstruct format, routing, struct.unpack mapping, TLV structure, offset translation, column naming, module structure, test extraction from raw HCI strings, Mikrotik example, gotchas. Later additions: required bleparser test cases section; bleparser coverage gaps gotcha; TLV ID overloading gotcha; multi-format dispatch gotcha.
+
+   - `theengs_decoder/SKILL.md` — Theengs decoder skill. Added to Workflow section: bleparser cross-check guidance. Added to Gotchas: Theengs covers variants bleparser misses (CGH1 example); TLV ID semantics are device-type-specific; post-loop fallback pattern for multi-length formats.
+
+   - `devices/mikrotik.js` — Created. **Has two known bugs awaiting fix:**
+     ```js
+     function decodeMikrotik(manufacturerData) {
+       if (manufacturerData.length !== 20) return null;
+       if (manufacturerData[0] !== 0x4f || manufacturerData[1] !== 0x09) return null;
+       const p = manufacturerData.slice(2);
+       let off = 0;
+       const version   = p.readUInt8(off++);
+       const user_data = p.readUInt8(off++);
+       off += 2; // salt
+       const acc_x_frac = p.readUInt8(off++);
+       const acc_x      = p.readUInt8(off++);  // BUG: should be readInt8
+       const acc_y_frac = p.readUInt8(off++);
+       const acc_y      = p.readUInt8(off++);  // BUG: should be readInt8
+       const acc_z_frac = p.readUInt8(off++);
+       const acc_z      = p.readUInt8(off++);  // BUG: should be readInt8
+       const temp_frac  = p.readUInt8(off++);
+       const temp       = p.readInt8(off++);
+       const uptime     = p.readUInt32LE(off); off += 4;
+       const flags      = p.readUInt8(off++);
+       const batt       = p.readUInt8(off++);  // BUG: should be & 0x7F
+       if (user_data & 1) return null;
+       const ax = acc_x + acc_x_frac / 256;
+       const ay = acc_y + acc_y_frac / 256;
+       const az = acc_z + acc_z_frac / 256;
+       const temperature = temp === -128 ? null : temp + temp_frac / 256;
+       return {
+         temperature_C: temperature,
+         acceleration_x_g: ax, acceleration_y_g: ay, acceleration_z_g: az,
+         acceleration_g: Math.sqrt(ax**2 + ay**2 + az**2),
+         uptime_s: uptime, battery_percent: batt, version_dimensionless: version,
+         switch_dimensionless: flags & 1, tilt_dimensionless: flags & 2,
+         dropping_dimensionless: flags & 4, impactX_dimensionless: flags & 8,
+         impactY_dimensionless: flags & 16, impactZ_dimensionless: flags & 32,
+         impact_dimensionless: (flags & 56) ? 1 : 0,
+       };
+     }
+     ```
+     Currently has 4 tests (2 from bleparser, 2 from sensorlogs). 2 new Theengs tests pending.
+
+   - `devices/qingping.js` — Created with CGH1 support and MAC address. Current state:
+     ```js
+     const DEVICE_TYPES = {
+       0x01: "CGG1", 0x04: "CGH1", 0x07: "CGG1", 0x09: "CGP1W",
+       0x0C: "CGD1", 0x0E: "CGDN1", 0x12: "CGPR1",
+     };
+     function decodeQingping(_manufacturerData, serviceData) {
+       const buf = serviceData?.["fdcd"];
+       if (!buf || buf.length < 8) return null;
+       const deviceId = buf[1];
+       if (!DEVICE_TYPES[deviceId]) return null;
+       const result = {};
+       let off = 8;
+       while (off + 2 <= buf.length) {
+         const id = buf[off], size = buf[off + 1];
+         off += 2;
+         if (off + size > buf.length) break;
+         const d = buf.slice(off, off + size);
+         if (id === 0x04 && size === 1) { result.open_dimensionless = d[0] === 0 ? 1 : 0; }
+         else if (id === 0x01 && size === 4) { result.temperature_C = d.readInt16LE(0)/10; result.humidity_percent = d.readUInt16LE(2)/10; }
+         else if (id === 0x02 && size === 1) { result.battery_percent = d[0]; }
+         else if (id === 0x07 && size === 2) { result.pressure_hPa = d.readUInt16LE(0)/10; }
+         else if (id === 0x08 && size === 4) { const motion=d[0]; result.motion_dimensionless=motion; result.illuminance_lux=d.readUInt16LE(1)+d[3]; if(motion) result.motionTimer_dimensionless=1; }
+         else if (id === 0x09 && size === 4) { result.illuminance_lux = d.readUInt32LE(0); }
+         else if (id === 0x11 && size === 1) { result.light_dimensionless = d[0]; }
+         else if (id === 0x12 && size === 4) { result.pm2_5_ugm3=d.readUInt16LE(0); result.pm10_ugm3=d.readUInt16LE(2); }
+         else if (id === 0x13 && size === 2) { result.co2_ppm = d.readUInt16LE(0); }
+         off += size;
+       }
+       if (deviceId === 0x04 && buf.length === 17 && result.open_dimensionless === undefined) {
+         result.open_dimensionless = buf[16] === 0 ? 1 : 0;
+       }
+       if (deviceId === 0x04) {
+         result.macAddress = [...buf.slice(2, 8)].reverse().map(b => b.toString(16).padStart(2, "0")).join(":");
+       }
+       return result;
+     }
+     export const decoder = { decoderName: "qingping", serviceUUID: "fdcd", advertisementDecode: decodeQingping, variableFormat: true };
+     ```
+     11 tests: 7 original device types + 4 CGH1 (2 long format with battery+open+mac, 2 short format with open+mac).
+
+   - `main.js` — Updated to import and register both mikrotik and qingping decoders:
+     ```js
+     import { decoder as mikrotik } from "./devices/mikrotik.js";
+     import { decoder as qingping } from "./devices/qingping.js";
+     export const decoders = [ruuvi, muse_v3, airpods, bthome, mopeka, rc1010, mikrotik, qingping];
+     ```
+
+   - `memory/reference_bleparser.md` — Created with upstream URL and local path.
+   - `memory/MEMORY.md` — Updated with reference_bleparser.md entry.
+
+4. Errors and fixes:
+   - **Markdown lint warnings in BLEPARSER.md**: Initial write had missing language specifiers on code blocks, missing blank lines around fences/lists. Fixed by rewriting the entire file with proper markdown formatting.
+   - **Node.js SyntaxError**: Used Unicode minus sign (−) in a node -e command. Fixed by using regular ASCII `-` comparison.
+   - **Incorrect earlier acceleration analysis**: First manual trace incorrectly computed accx as -89 for first Theengs payload. Re-running Node.js confirmed JS and Theengs actually agree on that payload. The sign bug only manifests with negative values (second payload `fffe` = -2 as int16).
+
+5. Problem Solving:
+   - **bleparser data layout**: Determined that bleparser passes the full adstruct (including len/type bytes) so sensor-ble must subtract 2 (mfr) or 4 (service data) from bleparser offsets.
+   - **Qingping TLV start offset**: bleparser `xdata_point=14` with `data[xdata_point-2]` = id, relative to full adstruct → sensor-ble `serviceData["fdcd"]` buf starts at offset 8 (14 - 4 uuid/type bytes - 2 for the -2 in bleparser = 8).
+   - **CGH1 not in bleparser**: bleparser qingping.py lacks device_id 0x04. Used Theengs CGH1_json.h + test_ble.cpp as source instead.
+   - **CGH1 two payload formats**: Theengs uses bit_static_value with invert. Simplified to: short=TLV 0x04 byte (0=open), long=last byte (0=open), both inverted to open_dimensionless (1=open, 0=closed).
+   - **Mikrotik acceleration sign bug**: acc_x/y/z high bytes must be Int8 not UInt8. Confirmed by Theengs test payload with negative accelerations and official MikroTik docs.
+   - **Mikrotik battery MSB**: Raw byte can have MSB set as status flag. Theengs masks with &127. Confirmed by payload 0xe4 → masked to 100%.
+
+6. All user messages:
+   - "study BLEPARSER.md as skill"
+   - "if bleparser/tree/master/package/tests contains a test for the targeted device, add it as a test case"
+   - "note the upstream repo at https://github.com/Ernst79/bleparser / the local checkout is under bleparser/"
+   - "add a mikrotik decoder" (interrupted)
+   - "add a mikrotik decoder from bleparser"
+   - "add qingping decoder"
+   - "the current qingping.js decoder does not handle type 'CGH1' (type 4) / add support for it by studying theengs_deocer CGH1 support"
+   - "use decoder/src/devices/CGH1_json.h" (during plan mode exploration)
+   - "and decoder/tests/BLE/test_ble.cpp" (during plan mode)
+   - "the theengs_decoder checkout is under decoder/" (during plan mode)
+   - "add any learnings to BLEPARSER.md"
+   - "note bleparser cross-checking opportunity and relevant learnings in theengs_decoder skill"
+   - "add mac address to output for type 4"
+   - "cross check mikrotik.js against theengs_decoder"
+   - "check against https://help.mikrotik.com/docs/spaces/UM/pages/105742533/MikroTik+Tag+advertisement+formats" (during plan mode)
+
+7. Pending Tasks:
+   - **Implement approved mikrotik.js bug fixes** (plan approved, not yet implemented):
+     1. Change `acc_x`, `acc_y`, `acc_z` from `p.readUInt8(off++)` to `p.readInt8(off++)`
+     2. Change `batt` from `p.readUInt8(off++)` to `p.readUInt8(off++) & 0x7F`
+     3. Add two new test cases from Theengs test_ble.cpp:
+        - `4f090100cea6000000000200a01c91085700185f`: tempc=28.625, accx=0, accy=0, accz=0.0078125, uptime=5703825, batt=95, switch=1, tilt=2, dropping=4, impactX=0, impactY=16, impactZ=32, impact=1
+        - `4f0901009e11fffffeff0000a119e802000029e4`: tempc=25.62890625, accx=-0.00390625, accy=-0.0078125, accz=0, uptime=744, batt=100, switch=1, tilt=0, dropping=0, impactX=8, impactY=0, impactZ=32, impact=1
+     4. Run `npm test` and `npm run decode:update`
+
+8. Current Work:
+   Immediately before the summary request, an approved plan existed for fixing two bugs in `devices/mikrotik.js`. The plan was just approved via ExitPlanMode; no code changes had been made yet.
+
+   The two bugs are:
+   - `acc_x/y/z` integer parts read as `readUInt8` (unsigned) instead of `readInt8` (signed), causing negative accelerations to appear as large positive values (e.g. -0.00390625 → 255.996)
+   - `batt` not masked with `& 0x7F`, causing batteries with MSB set to return raw values > 100% (e.g. 0xe4=228 instead of 100)
+
+9. Optional Next Step:
+   Implement the approved plan for `devices/mikrotik.js`. The plan states:
+
+   > "Change `acc_x`, `acc_y`, `acc_z` from `readUInt8` to `readInt8`"
+   > "Apply battery mask: `const batt = p.readUInt8(off++) & 0x7F;`"
+   > "Add two new test cases from Theengs `test_ble.cpp` (lines 792-793) that cover negative acceleration and non-zero flags"
+
+   Then run `npm test` (all tests including 2 new must pass) and `npm run decode:update`.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/mah/.claude/projects/-Users-mah-Ballon-src-BalloonWare-sensor-ble/d23acc51-ad18-49ac-b576-358ca4c3a788.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:17:11</sup>
+
+Implementing the two mikrotik.js fixes now.
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:17:13</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/mikrotik.js",
+  "old_string": "  const acc_x_frac = p.readUInt8(off++);\n  const acc_x      = p.readUInt8(off++);\n  const acc_y_frac = p.readUInt8(off++);\n  const acc_y      = p.readUInt8(off++);\n  const acc_z_frac = p.readUInt8(off++);\n  const acc_z      = p.readUInt8(off++);",
+  "new_string": "  const acc_x_frac = p.readUInt8(off++);\n  const acc_x      = p.readInt8(off++);\n  const acc_y_frac = p.readUInt8(off++);\n  const acc_y      = p.readInt8(off++);\n  const acc_z_frac = p.readUInt8(off++);\n  const acc_z      = p.readInt8(off++);"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:17:14</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/mikrotik.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:17:17</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/mikrotik.js",
+  "old_string": "  const batt       = p.readUInt8(off++);",
+  "new_string": "  const batt       = p.readUInt8(off++) & 0x7F;"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:17:18</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/mikrotik.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:17:35</sup>
+
+Now add the two new test cases. Need to compute exact expected values first.
+
+Payload 1: `4f090100cea6000000000200a01c91085700185f`
+- bytes after `4f09`: `00 ce a6 00 00 00 00 02 00 a0 1c 91 08 57 00 18 5f`
+- p = bytes after 4f09 (slice(2)): `00 ce a6 00 00 00 00 02 00 a0 1c 91 08 57 00 18 5f`
+- version=0x00, user_data=0xce, skip salt 0xa6 0x00
+- acc_x_frac=0x00, acc_x(Int8)=0x00=0
+- acc_y_frac=0x00, acc_y(Int8)=0x00=0  
+- acc_z_frac=0x02, acc_z(Int8)=0x00=0
+- temp_frac=0xa0, temp(Int8)=0x1c=28
+- uptime=readUInt32LE at off=12: bytes `91 08 57 00` = 0x00570891 = 5703825
+- flags=0x18, batt=0x5f & 0x7f = 95
+
+Wait, user_data=0xce has bit 0 set (0xce & 1 = 0) — actually 0xce = 1100 1110, bit0=0. OK not encrypted.
+
+- ax=0+0/256=0, ay=0+0/256=0, az=0+2/256=0.0078125
+- temperature=28+0xa0/256=28+160/256=28+0.625=28.625
+- flags=0x18=0001 1000: switch=0&1=0, tilt=0x18&2=0, dropping=0x18&4=0, impactX=0x18&8=8, impactY=0x18&16=16, impactZ=0x18&32=0, impact=(0x18&56)=(24)→1
+
+Payload 2: `4f0901009e11fffffeff0000a119e802000029e4`
+- p = bytes after 4f09 slice(2): `01 00 9e 11 ff ff fe ff 00 00 a1 19 e8 02 00 00 29 e4`
+- version=0x01, user_data=0x00, skip salt 0x9e 0x11
+- acc_x_frac=0xff, acc_x(Int8)=0xff=-1
+- acc_y_frac=0xfe, acc_y(Int8)=0xff=-1
+- acc_z_frac=0x00, acc_z(Int8)=0x00=0
+- temp_frac=0xa1, temp(Int8)=0x19=25
+- uptime=readUInt32LE at off=12: bytes at p[12..15]=`e8 02 00 00`=0x000002e8=744
+- flags=0x29, batt=0xe4&0x7f=100
+
+- ax=-1+255/256=-1+0.99609375=-0.00390625
+- ay=-1+254/256=-1+0.9921875=-0.0078125
+- az=0+0/256=0
+- temperature=25+0xa1/256=25+161/256=25+0.62890625=25.62890625
+- flags=0x29=0010 1001: switch=1, tilt=0, dropping=0, impactX=0x29&8=8, impactY=0, impactZ=0x29&32=32, impact=(0x29&56)=0x29&0x38=0x28=40→1
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:17:48</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/mikrotik.js",
+  "old_string": "  {\n    // sensorlog: TG-BT5-IN real capture (temp null)\n    given: { manufacturerData: \"4f090100c10affff0100f6ff0080636e75000050\" },\n    expected: {\n      temperature_C:          null,\n      acceleration_x_g:       255.99609375,\n      acceleration_y_g:       0.00390625,\n      acceleration_z_g:       255.9609375,\n      acceleration_g:         362.0082893476287,\n      uptime_s:               7695971,\n      battery_percent:        80,\n      version_dimensionless:  1,\n      switch_dimensionless:   0,\n      tilt_dimensionless:     0,\n      dropping_dimensionless: 0,\n      impactX_dimensionless:  0,\n      impactY_dimensionless:  0,\n      impactZ_dimensionless:  0,\n      impact_dimensionless:   0,\n    },\n  },\n];",
+  "new_string": "  {\n    // sensorlog: TG-BT5-IN real capture (temp null)\n    given: { manufacturerData: \"4f090100c10affff0100f6ff0080636e75000050\" },\n    expected: {\n      temperature_C:          null,\n      acceleration_x_g:       -1.00390625,\n      acceleration_y_g:       0.00390625,\n      acceleration_z_g:       -0.0390625,\n      acceleration_g:         1.0039933455655168,\n      uptime_s:               7695971,\n      battery_percent:        80,\n      version_dimensionless:  1,\n      switch_dimensionless:   0,\n      tilt_dimensionless:     0,\n      dropping_dimensionless: 0,\n      impactX_dimensionless:  0,\n      impactY_dimensionless:  0,\n      impactZ_dimensionless:  0,\n      impact_dimensionless:   0,\n    },\n  },\n  {\n    // Theengs TG-BT5-OUT: flags=0x18, batt from raw 0x5f\n    given: { manufacturerData: \"4f090100cea6000000000200a01c91085700185f\" },\n    expected: {\n      temperature_C:          28.625,\n      acceleration_x_g:       0,\n      acceleration_y_g:       0,\n      acceleration_z_g:       0.0078125,\n      acceleration_g:         0.0078125,\n      uptime_s:              
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:17:49</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/mikrotik.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:17:52</sup>
+
+The sensorlog TG-BT5-IN test also has negative acceleration now that we fixed the sign bug. Let me verify those values first before committing.
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:17:57</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\nconst data = Buffer.from('4f090100c10affff0100f6ff0080636e75000050', 'hex');\nconst p = data.slice(2);\nlet off = 0;\nconst version   = p.readUInt8(off++);\nconst user_data = p.readUInt8(off++);\noff += 2;\nconst acc_x_frac = p.readUInt8(off++);\nconst acc_x      = p.readInt8(off++);\nconst acc_y_frac = p.readUInt8(off++);\nconst acc_y      = p.readInt8(off++);\nconst acc_z_frac = p.readUInt8(off++);\nconst acc_z      = p.readInt8(off++);\nconst temp_frac  = p.readUInt8(off++);\nconst temp       = p.readInt8(off++);\nconst uptime     = p.readUInt32LE(off); off += 4;\nconst flags      = p.readUInt8(off++);\nconst batt       = p.readUInt8(off++) & 0x7F;\nconsole.log({acc_x_frac, acc_x, acc_y_frac, acc_y, acc_z_frac, acc_z, temp_frac, temp, uptime, flags: flags.toString(16), batt});\nconst ax = acc_x + acc_x_frac/256;\nconst ay = acc_y + acc_y_frac/256;\nconst az = acc_z + acc_z_frac/256;\nconsole.log({ax, ay, az, mag: Math.sqrt(ax**2+ay**2+az**2)});\n\"\n",
+  "description": "Compute corrected values for sensorlog TG-BT5-IN payload"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:18:00</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+{
+  acc_x_frac: 255,
+  acc_x: -1,
+  acc_y_frac: 1,
+  acc_y: 0,
+  acc_z_frac: 246,
+  acc_z: -1,
+  temp_frac: 0,
+  temp: -128,
+  uptime: 7695971,
+  flags: '0',
+  batt: 80
+}
+{
+  ax: -0.00390625,
+  ay: 0.00390625,
+  az: -0.0390625,
+  mag: 0.039451191165476865
+}
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:18:02</sup>
+
+The sensorlog expected values I put were wrong. Let me fix them:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:18:08</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/mikrotik.js",
+  "old_string": "  {\n    // sensorlog: TG-BT5-IN real capture (temp null)\n    given: { manufacturerData: \"4f090100c10affff0100f6ff0080636e75000050\" },\n    expected: {\n      temperature_C:          null,\n      acceleration_x_g:       -1.00390625,\n      acceleration_y_g:       0.00390625,\n      acceleration_z_g:       -0.0390625,\n      acceleration_g:         1.0039933455655168,\n      uptime_s:               7695971,\n      battery_percent:        80,\n      version_dimensionless:  1,\n      switch_dimensionless:   0,\n      tilt_dimensionless:     0,\n      dropping_dimensionless: 0,\n      impactX_dimensionless:  0,\n      impactY_dimensionless:  0,\n      impactZ_dimensionless:  0,\n      impact_dimensionless:   0,\n    },\n  },",
+  "new_string": "  {\n    // sensorlog: TG-BT5-IN real capture (temp null)\n    given: { manufacturerData: \"4f090100c10affff0100f6ff0080636e75000050\" },\n    expected: {\n      temperature_C:          null,\n      acceleration_x_g:       -0.00390625,\n      acceleration_y_g:       0.00390625,\n      acceleration_z_g:       -0.0390625,\n      acceleration_g:         0.039451191165476865,\n      uptime_s:               7695971,\n      battery_percent:        80,\n      version_dimensionless:  1,\n      switch_dimensionless:   0,\n      tilt_dimensionless:     0,\n      dropping_dimensionless: 0,\n      impactX_dimensionless:  0,\n      impactY_dimensionless:  0,\n      impactZ_dimensionless:  0,\n      impact_dimensionless:   0,\n    },\n  },"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:18:09</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/mikrotik.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:18:11</sup>
+
+Now verify all the new test values and also the sensorlog TG-BT5-OUT:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:18:21</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\n// Theengs test 1\nconst d1 = Buffer.from('4f090100cea6000000000200a01c91085700185f', 'hex');\nconst p1 = d1.slice(2);\nlet off = 0;\nconst v1 = p1.readUInt8(off++);\nconst ud1 = p1.readUInt8(off++);\noff += 2;\nconst axf1=p1.readUInt8(off++), ax1=p1.readInt8(off++);\nconst ayf1=p1.readUInt8(off++), ay1=p1.readInt8(off++);\nconst azf1=p1.readUInt8(off++), az1=p1.readInt8(off++);\nconst tf1=p1.readUInt8(off++), t1=p1.readInt8(off++);\nconst up1=p1.readUInt32LE(off); off+=4;\nconst fl1=p1.readUInt8(off++), ba1=p1.readUInt8(off++)&0x7f;\nconst aax1=ax1+axf1/256, aay1=ay1+ayf1/256, aaz1=az1+azf1/256;\nconsole.log('T1:', {v:v1,ud:ud1,ax:aax1,ay:aay1,az:aaz1,mag:Math.sqrt(aax1**2+aay1**2+aaz1**2),temp:t1+tf1/256,up:up1,flags:'0x'+fl1.toString(16),batt:ba1});\n\" && node -e \"\n// Theengs test 2\nconst d2 = Buffer.from('4f0901009e11fffffeff0000a119e802000029e4', 'hex');\nconst p2 = d2.slice(2);\nlet off = 0;\nconst v2 = p2.readUInt8(off++);\nconst ud2 = p2.readUInt8(off++);\noff += 2;\nconst axf2=p2.readUInt8(off++), ax2=p2.readInt8(off++);\nconst ayf2=p2.readUInt8(off++), ay2=p2.readInt8(off++);\nconst azf2=p2.readUInt8(off++), az2=p2.readInt8(off++);\nconst tf2=p2.readUInt8(off++), t2=p2.readInt8(off++);\nconst up2=p2.readUInt32LE(off); off+=4;\nconst fl2=p2.readUInt8(off++), ba2=p2.readUInt8(off++)&0x7f;\nconst aax2=ax2+axf2/256, aay2=ay2+ayf2/256, aaz2=az2+azf2/256;\nconsole.log('T2:', {v:v2,ud:ud2,ax:aax2,ay:aay2,az:aaz2,mag:Math.sqrt(aax2**2+aay2**2+aaz2**2),temp:t2+tf2/256,up:up2,flags:'0x'+fl2.toString(16),batt:ba2});\n\"\n",
+  "description": "Verify Theengs test expected values"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:18:23</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+T1: {
+  v: 1,
+  ud: 0,
+  ax: 0,
+  ay: 0,
+  az: 0.0078125,
+  mag: 0.0078125,
+  temp: 28.625,
+  up: 5703825,
+  flags: '0x18',
+  batt: 95
+}
+T2: {
+  v: 1,
+  ud: 0,
+  ax: -0.00390625,
+  ay: -0.0078125,
+  az: 0,
+  mag: 0.008734640537108554,
+  temp: 25.62890625,
+  up: 744,
+  flags: '0x29',
+  batt: 100
+}
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:18:33</sup>
+
+T1 version should be 1 (not 0 as I had). Also the magnitude for T2 is 0.008734640537108554 not 0.008780086526376012. Let me fix both:
+
+Wait, T1 shows `v: 1` — but I had `version_dimensionless: 0` in the test. Let me also recheck T1: user_data=0xce? Let me re-examine byte layout.
+
+Payload `4f090100cea6000000000200a01c91085700185f` = bytes: `4f 09 01 00 ce a6 00 00 00 00 02 00 a0 1c 91 08 57 00 18 5f`
+
+p = slice(2) = `01 00 ce a6 00 00 00 00 02 00 a0 1c 91 08 57 00 18 5f`
+- version = p[0] = 0x01
+- user_data = p[1] = 0x00  
+- salt skip: p[2]=0xce, p[3]=0xa6
+- acc_x_frac=p[4]=0x00, acc_x(Int8)=p[5]=0x00=0
+- acc_y_frac=p[6]=0x00, acc_y(Int8)=p[7]=0x00=0
+- acc_z_frac=p[8]=0x02, acc_z(Int8)=p[9]=0x00=0
+- temp_frac=p[10]=0xa0, temp(Int8)=p[11]=0x1c=28
+- uptime=p[12..15]=`91 08 57 00`=5703825
+- flags=p[16]=0x18, batt=p[17]=0x5f&0x7f=95
+
+The node computation confirms version=1. My test case had `version_dimensionless: 0` — wrong. Fix that and also the T2 magnitude:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:18:46</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/mikrotik.js",
+  "old_string": "  {\n    // Theengs TG-BT5-OUT: flags=0x18, batt from raw 0x5f\n    given: { manufacturerData: \"4f090100cea6000000000200a01c91085700185f\" },\n    expected: {\n      temperature_C:          28.625,\n      acceleration_x_g:       0,\n      acceleration_y_g:       0,\n      acceleration_z_g:       0.0078125,\n      acceleration_g:         0.0078125,\n      uptime_s:               5703825,\n      battery_percent:        95,\n      version_dimensionless:  0,\n      switch_dimensionless:   0,\n      tilt_dimensionless:     0,\n      dropping_dimensionless: 0,\n      impactX_dimensionless:  8,\n      impactY_dimensionless:  16,\n      impactZ_dimensionless:  0,\n      impact_dimensionless:   1,\n    },\n  },\n  {\n    // Theengs TG-BT5-OUT: negative accel, batt from raw 0xe4 (MSB=status flag, masked to 100)\n    given: { manufacturerData: \"4f0901009e11fffffeff0000a119e802000029e4\" },\n    expected: {\n      temperature_C:          25.62890625,\n      acceleration_x_g:       -0.00390625,\n      acceleration_y_g:       -0.0078125,\n      acceleration_z_g:       0,\n      acceleration_g:         0.008780086526376012,\n      uptime_s:               744,\n      battery_percent:        100,\n      version_dimensionless:  1,\n      switch_dimensionless:   1,\n      tilt_dimensionless:     0,\n      dropping_dimensionless: 0,\n      impactX_dimensionless:  8,\n      impactY_dimensionless:  0,\n      impactZ_dimensionless:  32,\n      impact_dimensionless:   1,\n    },\n  },",
+  "new_string": "  {\n    // Theengs TG-BT5-OUT: flags=0x18, batt from raw 0x5f\n    given: { manufacturerData: \"4f090100cea6000000000200a01c91085700185f\" },\n    expected: {\n      temperature_C:          28.625,\n      acceleration_x_g:       0,\n      acceleration_y_g:       0,\n      acceleration_z_g:       0.0078125,\n      acceleration_g:         0.0078125,\n      uptime_s:
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:18:47</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/mikrotik.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:18:49</sup>
+
+Now also need to fix the sensorlog TG-BT5-OUT test — its accel values changed with the sign fix. Let me verify:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:18:55</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "node -e \"\nconst d = Buffer.from('4f090100c517040001000200b017996f75000064', 'hex');\nconst p = d.slice(2);\nlet off = 0;\nconst v=p.readUInt8(off++), ud=p.readUInt8(off++);\noff += 2;\nconst axf=p.readUInt8(off++), ax=p.readInt8(off++);\nconst ayf=p.readUInt8(off++), ay=p.readInt8(off++);\nconst azf=p.readUInt8(off++), az=p.readInt8(off++);\nconst tf=p.readUInt8(off++), t=p.readInt8(off++);\nconst up=p.readUInt32LE(off); off+=4;\nconst fl=p.readUInt8(off++), ba=p.readUInt8(off++)&0x7f;\nconst aax=ax+axf/256, aay=ay+ayf/256, aaz=az+azf/256;\nconsole.log({v,ud,ax:aax,ay:aay,az:aaz,mag:Math.sqrt(aax**2+aay**2+aaz**2),temp:t===(-128)?null:t+tf/256,up,fl:fl.toString(16),ba});\n\"\n",
+  "description": "Recompute sensorlog TG-BT5-OUT with fixed code"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:18:57</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+{
+  v: 1,
+  ud: 0,
+  ax: 0.015625,
+  ay: 0.00390625,
+  az: 0.0078125,
+  mag: 0.01790068630842125,
+  temp: 23.6875,
+  up: 7696281,
+  fl: '0',
+  ba: 100
+}
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:18:59</sup>
+
+Good — sensorlog TG-BT5-OUT values are unchanged (all positive, no MSB on battery). Now run tests:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:19:00</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "npm test 2>&1",
+  "description": "Run unit tests"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:19:00</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+> sensor-ble@0.0.1 test
+> node harness/test.js
+
+Test passed airpods
+Test passed airpods
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test failed
+Given: undefined
+Decoded: {
+  temperature_C: null,
+  acceleration_x_g: 0,
+  acceleration_y_g: -0.01171875,
+  acceleration_z_g: 0.00390625,
+  acceleration_g: 0.012352647110032733,
+  uptime_s: 6744171,
+  battery_percent: 98,
+  version_dimensionless: 1,
+  switch_dimensionless: 0,
+  tilt_dimensionless: 0,
+  dropping_dimensionless: 0,
+  impactX_dimensionless: 0,
+  impactY_dimensionless: 0,
+  impactZ_dimensionless: 0,
+  impact_dimensionless: 0
+}
+Expected: {
+  temperature_C: null,
+  acceleration_x_g: 0,
+  acceleration_y_g: 255.98828125,
+  acceleration_z_g: 0.00390625,
+  acceleration_g: 255.9882812798037,
+  uptime_s: 6744171,
+  battery_percent: 98,
+  version_dimensionless
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:19:06</sup>
+
+The first two bleparser test cases (tests 1 and 2 from the original 4) have wrong expected values — they had the old unsigned accel values. Let me check the raw payloads:
+
+- Test 1: `4f09010010a90000fdff010000806be866000062` — `fd ff` in acc_y position = acc_y_frac=0xfd, acc_y(Int8)=0xff=-1, so ay=-1+253/256=-0.01171875. Old expected was 255.98828125 (unsigned). Need to fix.
+- Test 2: same payload with last byte change — same accel values.
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:19:16</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/mikrotik.js",
+  "old_string": "  {\n    // TG-BT5-IN: temp sentinel -128 -> null\n    given: { manufacturerData: \"4f09010010a90000fdff010000806be866000062\" },\n    expected: {\n      temperature_C:          null,\n      acceleration_x_g:       0,\n      acceleration_y_g:       255.98828125,\n      acceleration_z_g:       0.00390625,\n      acceleration_g:         255.9882812798037,\n      uptime_s:               6744171,\n      battery_percent:        98,\n      version_dimensionless:  1,\n      switch_dimensionless:   0,\n      tilt_dimensionless:     0,\n      dropping_dimensionless: 0,\n      impactX_dimensionless:  0,\n      impactY_dimensionless:  0,\n      impactZ_dimensionless:  0,\n      impact_dimensionless:   0,\n    },\n  },\n  {\n    // TG-BT5-OUT: temperature present\n    given: { manufacturerData: \"4f09010010a90000fdff0100a1196be866000062\" },\n    expected: {\n      temperature_C:          25.62890625,\n      acceleration_x_g:       0,\n      acceleration_y_g:       255.98828125,\n      acceleration_z_g:       0.00390625,\n      acceleration_g:         255.9882812798037,\n      uptime_s:               6744171,\n      battery_percent:        98,\n      version_dimensionless:  1,\n      switch_dimensionless:   0,\n      tilt_dimensionless:     0,\n      dropping_dimensionless: 0,\n      impactX_dimensionless:  0,\n      impactY_dimensionless:  0,\n      impactZ_dimensionless:  0,\n      impact_dimensionless:   0,\n    },\n  },",
+  "new_string": "  {\n    // TG-BT5-IN: temp sentinel -128 -> null\n    given: { manufacturerData: \"4f09010010a90000fdff010000806be866000062\" },\n    expected: {\n      temperature_C:          null,\n      acceleration_x_g:       0,\n      acceleration_y_g:       -0.01171875,\n      acceleration_z_g:       0.00390625,\n      acceleration_g:         0.012352647110032733,\n      uptime_s:               6744171,\n      battery_percen
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:19:17</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/mikrotik.js has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:19:19</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "npm test 2>&1",
+  "description": "Run unit tests"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:19:20</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+> sensor-ble@0.0.1 test
+> node harness/test.js
+
+Test passed airpods
+Test passed airpods
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed bthome
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mikrotik
+Test passed mopeka
+Test passed mopeka
+Test passed musev3
+Test passed musev3
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed qingping
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed rc1010
+Test passed ruuvi
+Test passed ruuvi
+All tests completed.
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:19:22</sup>
+
+All 6 mikrotik tests pass. Run decode:update for sensorlog snapshots:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:19:23</sup>
+
+<details>
+<summary>Tool: <code>Bash</code></summary>
+
+```json
+{
+  "command": "npm run decode:update 2>&1",
+  "description": "Regenerate regression snapshots"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:19:23</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+> sensor-ble@0.0.1 decode:update
+> node harness/regression.js --update
+
+Updated snapshot: 2026-03-28_17-22-29.json (361 results)
+Updated snapshot: 2026-05-08_20-21-43.json (42 results)
+Updated snapshot: 2026-05-08_20-36-52.json (22 results)
+Updated snapshot: otodata.json (4 results)
+Updated snapshot: quingping.json (9 results)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:19:27</sup>
+
+All done. Two bugs fixed in [devices/mikrotik.js](devices/mikrotik.js):
+
+1. `acc_x/y/z` integer bytes now `readInt8` — negative accelerations decode correctly
+2. Battery masked `& 0x7F` — MSB status flag no longer inflates percentage
+
+All 6 mikrotik tests pass (4 original with updated expected values, 2 new Theengs cases covering negative accel and flags). Snapshots updated.
 
 
 ---
