@@ -6,8 +6,8 @@
 | **Session ID** | `d23acc51-ad18-49ac-b576-358ca4c3a788` |
 | **Working Dir** | `/Users/mah/Ballon/src/BalloonWare/sensor-ble` |
 | **Started** | 10/05/2026, 16:04:19 |
-| **Last Updated** | 10/05/2026, 17:01:24 |
-| **Messages** | 218 |
+| **Last Updated** | 10/05/2026, 17:04:43 |
+| **Messages** | 226 |
 
 ---
 
@@ -4179,6 +4179,126 @@ CGH1 support added to [devices/qingping.js](devices/qingping.js):
 - `0x04` TLV handler → `open_dimensionless` (short/action format, 14 bytes)
 - Post-loop fallback reads `buf[16]` for long/status format (17 bytes)
 - 4 test cases covering all 4 Theengs test payloads (2 long, 2 short)
+
+
+---
+
+## User <sup>10/05/2026, 17:04:11</sup>
+
+<ide_opened_file>The user opened the file /Users/mah/Ballon/src/BalloonWare/sensor-ble/devices/qingping.js in the IDE. This may or may not be related to the current task.</ide_opened_file>
+
+add any learnings to BLEPARSER.md
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:04:18</sup>
+
+Reading BLEPARSER.md to find where to add CGH1 learnings.
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:04:19</sup>
+
+<details>
+<summary>Tool: <code>Read</code></summary>
+
+```json
+{
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/BLEPARSER.md"
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:04:19</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+1	---
+2	name: bleparser_decoder
+3	description: 'Transcribe a Python bleparser decoder for a named device file into a sensor-ble JavaScript decoder module and integrate it. Use when asked to add a new BLE device decoder from a bleparser source file and a bleparser/package/bleparser has a Python file matching the device name'
+4	
+5	argument-hint: 'Path to the bleparser Python file (e.g. bleparser/package/bleparser/qingping.py), or device name to search for.'
+6	user-invocable: true
+7	---
+8	
+9	# Bleparser Transcription Skill
+10	
+11	Transcribe a `bleparser/package/bleparser/<device>.py` file into a `sensor-ble` JavaScript decoder module and integrate it.
+12	
+13	Upstream repo: [Ernst79/bleparser](https://github.com/Ernst79/bleparser) — local checkout at `bleparser/`.
+14	
+15	## Goal
+16	
+17	Given a file like `bleparser/package/bleparser/qingping.py`, produce `devices/<name>.js` following `sensor-ble` conventions and register it in `main.js`.
+18	
+19	---
+20	
+21	## Bleparser Python Format
+22	
+23	E
+...(truncated)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:04:26</sup>
+
+The CGH1 work surfaced several learnings not in BLEPARSER.md: Theengs as supplementary source when bleparser doesn't cover a device, TLV ID overloading, and the multi-format dispatch pattern. Adding these to Gotchas:
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:04:36</sup>
+
+<details>
+<summary>Tool: <code>Edit</code></summary>
+
+```json
+{
+  "replace_all": false,
+  "file_path": "/Users/mah/Ballon/src/BalloonWare/sensor-ble/BLEPARSER.md",
+  "old_string": "### TLV parsers\n\n- For variable-format TLV parsers (like qingping), set `variableFormat: true` on the decoder\n- Consumer serializes output as `_decoded` with `|` replacing `,`",
+  "new_string": "### TLV parsers\n\n- For variable-format TLV parsers (like qingping), set `variableFormat: true` on the decoder\n- Consumer serializes output as `_decoded` with `|` replacing `,`\n\n### bleparser coverage gaps — use Theengs as supplement\n\nbleparser `qingping.py` does not handle CGH1 (device_id `0x04`). When bleparser lacks a device variant, check `decoder/src/devices/` for the Theengs `.h` file and `decoder/tests/BLE/test_ble.cpp` for test payloads. The Theengs descriptor gives format, bit layout, and test vectors; the BLEPARSER skill's offset rules still apply (`serviceData[\"fdcd\"]` buffer = Theengs `servicedata` nibble/2).\n\n### TLV ID overloading across device types\n\nThe same TLV ID can carry different semantics on different Qingping devices. Example: `0x0F` = packet sequence on most devices, but = contact state on CGH1 long-format (17-byte) payloads. The `0x04` TLV carries contact state only on CGH1 short-format (14-byte). Guard device-specific TLV handling with a `deviceId === 0x04` check rather than adding global handlers.\n\n### Multi-format dispatch within one device type (Qingping TLV)\n\nSome Qingping devices emit payloads of different lengths encoding different fields. Dispatch on `buf.length` after the TLV loop when a field can only be determined from payload length (e.g. CGH1: `0x04` TLV present in 14-byte format; last byte of 17-byte format carries the same value). Use a post-loop fallback rather than polluting the TLV loop with length-conditional logic."
+}
+```
+
+</details>
+
+
+---
+
+## User <sup>10/05/2026, 17:04:38</sup>
+
+<details>
+<summary>Tool Result</summary>
+
+```
+The file /Users/mah/Ballon/src/BalloonWare/sensor-ble/BLEPARSER.md has been updated successfully. (file state is current in your context — no need to Read it back)
+```
+
+</details>
+
+
+---
+
+## Assistant <sup>10/05/2026, 17:04:43</sup>
+
+Three new gotchas added to [BLEPARSER.md](BLEPARSER.md):
+
+- **bleparser coverage gaps** — when bleparser lacks a device variant, consult `decoder/src/devices/` (Theengs) + `decoder/tests/BLE/test_ble.cpp`
+- **TLV ID overloading** — same ID (`0x0F`, `0x04`) means different things on different device types; guard with `deviceId` check
+- **Multi-format dispatch** — use post-loop fallback on `buf.length` rather than length-conditional logic inside the TLV loop
 
 
 ---

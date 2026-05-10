@@ -289,3 +289,15 @@ Derived `manufacturerData` from test `"043E2202010300DD7B146E2CDC1615FF4F0901001
 
 - For variable-format TLV parsers (like qingping), set `variableFormat: true` on the decoder
 - Consumer serializes output as `_decoded` with `|` replacing `,`
+
+### bleparser coverage gaps — use Theengs as supplement
+
+bleparser `qingping.py` does not handle CGH1 (device_id `0x04`). When bleparser lacks a device variant, check `decoder/src/devices/` for the Theengs `.h` file and `decoder/tests/BLE/test_ble.cpp` for test payloads. The Theengs descriptor gives format, bit layout, and test vectors; the BLEPARSER skill's offset rules still apply (`serviceData["fdcd"]` buffer = Theengs `servicedata` nibble/2).
+
+### TLV ID overloading across device types
+
+The same TLV ID can carry different semantics on different Qingping devices. Example: `0x0F` = packet sequence on most devices, but = contact state on CGH1 long-format (17-byte) payloads. The `0x04` TLV carries contact state only on CGH1 short-format (14-byte). Guard device-specific TLV handling with a `deviceId === 0x04` check rather than adding global handlers.
+
+### Multi-format dispatch within one device type (Qingping TLV)
+
+Some Qingping devices emit payloads of different lengths encoding different fields. Dispatch on `buf.length` after the TLV loop when a field can only be determined from payload length (e.g. CGH1: `0x04` TLV present in 14-byte format; last byte of 17-byte format carries the same value). Use a post-loop fallback rather than polluting the TLV loop with length-conditional logic.
