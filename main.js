@@ -11,5 +11,6 @@ import { decoder as witmotion } from "./devices/witmotion.js";
 import { decoder as xiaomi_atc } from "./devices/xiaomi_atc.js";
 import { decoder as mikrotik } from "./devices/mikrotik.js";
 import { decoder as qingping } from "./devices/qingping.js";
+import { decoder as tess5600 } from "./devices/tess5600.js";
 
-export const decoders = [ruuvi, muse_v3, airpods, bthome, mopeka, cscs, hrs, cps, rscs, witmotion, xiaomi_atc, mikrotik, qingping];
+export const decoders = [ruuvi, muse_v3, airpods, bthome, mopeka, cscs, hrs, cps, rscs, witmotion, xiaomi_atc, mikrotik, qingping, tess5600];
