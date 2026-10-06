@@ -27,6 +27,9 @@ If the user did not name devices, ask which ones to translate. Show the choices 
 node .claude/skills/theengs_decoder/scripts/theengs_extract.mjs --list
 ```
 
+Names are file stems from Theengs `src/devices/` (`VICTRON_SBS`), not model IDs
+(`VICTSBS`). If a name does not resolve, find the stem in the list.
+
 ### 2. Ask the packaging
 
 Ask with AskUserQuestion, unless already stated:
@@ -104,6 +107,8 @@ https://raw.githubusercontent.com/<owner>/<repo>/<branch>/theengs/<file>.js
 Then state, briefly:
 
 - The links work once the branch is pushed. Do not commit or push unless asked.
+- `npm run qr -- <link>` makes a scannable Sensor Logger deep-link QR code, and
+  `npm run serve` serves the files locally for a try before pushing.
 - Install path: Sensor Logger, Settings, Device Settings, Custom Decoders, Add Decoder.
 - Per decoder: how it is matched (`manufacturer`, `serviceUUID` or `name`) and the vector count.
 - Anything not ported and why: MAC or name conditions, encryption, collisions, synthetic tests.

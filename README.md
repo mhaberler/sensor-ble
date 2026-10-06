@@ -143,6 +143,8 @@ This repository is structured in two parts:
 
 - The [harness](harness/) folder, containing an implementation of the Sensor BLE API for use on desktop environments. You may find `node harness/main.js` useful for testing your BLE devices. The harness uses the `@abandonware/noble` bluetooth package, although the sensor ble decoders can be used with any reasonable bluetooth package.
 
+- The [theengs](theengs/) folder, containing custom-load decoders ported from [Theengs Decoder](https://github.com/theengs/decoder). They are not part of `main.js`; see [THEENGS.md](THEENGS.md) for how they are made, tested and installed.
+
 ### Loading a Custom Decoder into Sensor Logger
 
 Decoders don't have to live in this repo. [Sensor Logger](https://www.tszheichoi.com/sensorlogger) can load a decoder from a URL at runtime, alongside the built-in ones. This is useful if you have a

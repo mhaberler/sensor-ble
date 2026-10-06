@@ -14,6 +14,9 @@ yarn-error.log*
 .env.local
 .env.*.local
 
+# Decoder copies with private keys filled in
+local/
+
 # Optional npm cache directory
 .npm
 

@@ -7,7 +7,10 @@
   "scripts": {
     "start": "node harness/main.js",
     "test": "node harness/test.js",
-"decode": "node harness/decode.js"
+"decode": "node harness/decode.js",
+    "victron:key": "node harness/victron-key.js",
+    "serve": "node harness/serve.js",
+    "qr": "node harness/qr.js"
   },
   "author": "Kelvin Choi",
   "description": "Utilities to connect & decode BLE sensor data",
