@@ -26,4 +26,5 @@ yarn-error.log*
 # OS generated files
 Thumbs.db
 Desktop.ini
+.cc-history
 
