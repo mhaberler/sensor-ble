@@ -4,8 +4,9 @@ import { getDecoders } from "./registry.js";
 async function run() {
   const decoders = await getDecoders();
   for (const decoderModule of decoders) {
-    const { tests, decoder } = decoderModule;
+    const { tests, decoder, custom } = decoderModule;
     if (
+      !custom &&
       mainDecoders.find((d) => d.decoderName === decoder.decoderName) == null
     ) {
       throw new Error(
